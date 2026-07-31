@@ -1,12 +1,6 @@
 ---
-description: Apply lean, risk-based repository and handoff behavior
+description: Apply repository agent defaults
 alwaysApply: true
 ---
 
-# Repository Agent Defaults
-
-- Follow `AGENTS.md`; do not preload lifecycle documents.
-- Do not plan routine changes or repeat plans on each prompt, including Android Studio work.
-- Probe potentially large files with `scripts/context_probe.py` before loading them. For logs and append-only histories, search or read the newest chunk first and page backward only as needed.
-- Use targeted checks and bounded output. Ask before optional extreme-context reads, repository-wide analysis, full validation expansion, or more than two failed fix/retest cycles.
-- Update handoffs once only when durable context changes. Use `MULTI_AGENT.md` only for actual concurrency.
+Follow `AGENTS.md` as authoritative; do not preload playbooks. IDE or Android Studio context alone does not require a plan. Load `MULTI_AGENT.md` only for actual concurrent agents.

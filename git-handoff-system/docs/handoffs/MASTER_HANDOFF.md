@@ -7,7 +7,7 @@ Permanent handoffs live in `docs/handoffs/` and are committed with the repositor
 1. Preserve unrelated user work and never assume uncommitted changes are disposable.
 2. Store durable context in handoffs; obtain transient Git facts from Git when they are relevant.
 3. Active handoffs are replacement-style. Per-branch histories and global `HISTORY.md` are append-only.
-4. Keep `AGENTS.md` below 6,000 characters, IDE shims below 2,000, active/archived handoffs below 6,000, each history segment below 12,000, and on-demand policy documents below 20,000 characters.
+4. Keep `AGENTS.md` below 3,500 characters, IDE shims below 600, active/archived handoffs below 6,000, each history segment below 12,000, and on-demand policy documents below 20,000 characters.
 5. Verify only documentation claims that affect the current action, and distinguish Git-verified facts, owner decisions, unknowns, and recommendations.
 6. Keep relevant handoff updates with the commit or PR they describe.
 7. Never delete branch documentation; archive it when the branch closes.

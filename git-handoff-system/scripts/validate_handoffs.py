@@ -15,9 +15,9 @@ POLICY_MAX_CHARACTERS = 20_000
 HANDOFF_MAX_CHARACTERS = 6_000
 HISTORY_MAX_CHARACTERS = 12_000
 ENTRYPOINT_LIMITS = {
-    "AGENTS.md": 6_000,
-    "GEMINI.md": 1_500,
-    ".cursor/rules/handoff-maintenance.mdc": 2_000,
+    "AGENTS.md": 3_500,
+    "GEMINI.md": 400,
+    ".cursor/rules/handoff-maintenance.mdc": 600,
 }
 POLICY_FILES = {
     "MASTER_HANDOFF.md",
