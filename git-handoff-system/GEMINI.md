@@ -1,13 +1,5 @@
 # Gemini / Google Agent Entry Point
 
-Before repository work, follow `AGENTS.md`.
+Follow `AGENTS.md` as the authoritative procedure; do not duplicate or preload detailed protocols.
 
-Required reading:
-
-1. `docs/handoffs/MASTER_HANDOFF.md`
-2. `docs/handoffs/REPOSITORY.md`
-3. `docs/handoffs/README.md`
-4. Current branch handoff and adjacent `.history.md`
-
-Verify documentation against git. Update handoffs after every agent change, append meaningful history milestones, run `python scripts/validate_handoffs.py`, and follow the PR/archive lifecycle in the master protocol.
-
+IDE context alone does not require a plan. Probe large context locally, read append-only records from the newest relevant chunk, use compact targeted checks, and ask before optional extreme-context or broad validation expansion. Use `MULTI_AGENT.md` only for actual concurrent agents.

@@ -1,18 +1,13 @@
 # Branch Handoff Index
 
-Read [MASTER_HANDOFF.md](MASTER_HANDOFF.md) and [REPOSITORY.md](REPOSITORY.md) first.
+Active branch inventory and merge order. Consult the linked handoff when resuming that branch; detailed lifecycle and multi-agent guides are conditional references, not required startup reading.
 
-Each active branch has a replacement-style handoff and adjacent append-only history. Closed branches are archived under [archive/](archive/) and logged in [HISTORY.md](HISTORY.md).
-
-Last verified: `YYYY-MM-DD`
-
-| Branch | Tip/state | Role | Handoff | History |
-|---|---|---|---|---|
-| `main` | `<replace with sha/state>` | Shared integration branch | [main.md](main.md) | [history](main.history.md) |
+| Branch | Role | Handoff | History |
+|---|---|---|---|
+| `main` | Shared integration branch | [main.md](main.md) | [history](main.history.md) |
 
 ## Current merge order
 
 `<Describe current dependencies or state that no feature branches are open.>`
 
-New branches use [templates/](templates/). Validate with `python scripts/validate_handoffs.py`.
-
+Update this index only when branch inventory, role, or merge order changes. New branches use [templates/](templates/). For actual concurrent work, use separate Git worktrees as described in [MULTI_AGENT.md](MULTI_AGENT.md).

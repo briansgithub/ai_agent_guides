@@ -1,33 +1,24 @@
 # Branch: `main`
 
-## Identity
-
-- Tip: `<sha>` — `<subject>`
-- Upstream: `origin/main`
-- Role: shared integration branch
-- History: [main.history.md](main.history.md)
-- Last verified: `YYYY-MM-DD`
-
-## Goal and scope
+## Objective
 
 Maintain the stable integration branch.
 
-## Changes since previous published tip
+## Constraints and decisions
 
-- `<sha>`: `<concise change>`
+- Upstream integration branch: `origin/main` (customize if different)
+- History: [main.history.md](main.history.md)
 
-## Current status
+## Risks or blockers
 
-- Working tree: `<clean/dirty>`
-- Remote relationship: `<in sync/ahead/behind/diverged>`
-- Validation: `<results>`
+`<Durable unresolved issue, or none>`
 
-## Next actions
+## Next action
 
-1. `<immediate action>`
+`<One immediate action, or none>`
 
-## Merge and cleanup
+## Validation checkpoint
 
-- Readiness: `<state>`
-- `main.md` is not archived while `main` remains the default branch.
+`<Latest meaningful release/integration checks, or not yet required>`
 
+Transient tip, clean/dirty state, and ahead/behind status come from Git and are not mirrored here.

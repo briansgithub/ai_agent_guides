@@ -16,5 +16,5 @@ Detailed milestones belong in each branch’s adjacent `.history.md` and archive
 
 ## Entries
 
-<!-- Append below. At ~30,000 characters, start HISTORY/YYYY.md and link it here. -->
+<!-- Append below. Before 12,000 characters, start HISTORY/YYYY.md and link it here. -->
 

@@ -1,16 +1,12 @@
 ---
-description: Keep permanent branch handoffs current after every agent change
+description: Apply lean, risk-based repository and handoff behavior
 alwaysApply: true
 ---
 
-# Handoff Maintenance
+# Repository Agent Defaults
 
-- Read `AGENTS.md`, `docs/handoffs/MASTER_HANDOFF.md`, `docs/handoffs/REPOSITORY.md`, the active index, and current branch handoff/history before work.
-- Verify handoff claims against git.
-- After every agent change, update the affected active handoff and index.
-- Append per-branch history for meaningful milestones only; never rewrite older entries.
-- Keep every handoff/history Markdown file strictly below 42,000 characters.
-- Run `python scripts/validate_handoffs.py` after handoff changes.
-- Before every PR, propose checks and ask the owner to approve or revise them.
-- After merge/pull, archive handoff/history, append global HISTORY, refresh the index, and delete reachable merged branches.
-
+- Follow `AGENTS.md`; do not preload lifecycle documents.
+- Do not plan routine changes or repeat plans on each prompt, including Android Studio work.
+- Probe potentially large files with `scripts/context_probe.py` before loading them. For logs and append-only histories, search or read the newest chunk first and page backward only as needed.
+- Use targeted checks and bounded output. Ask before optional extreme-context reads, repository-wide analysis, full validation expansion, or more than two failed fix/retest cycles.
+- Update handoffs once only when durable context changes. Use `MULTI_AGENT.md` only for actual concurrency.

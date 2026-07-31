@@ -1,41 +1,29 @@
 # Branch: `<branch-name>`
 
-## Identity
-
-- Tip: `<sha>` — `<subject>`
-- Parent/base: `<branch>` at `<sha>`
-- Upstream: `<remote-branch or none>`
-- Role: `<feature/fix/chore/integration>`
-- History: [<filename>.history.md](<filename>.history.md)
-- Last verified: `YYYY-MM-DD`
-
-## Goal and scope
+## Objective
 
 - Goal: `<why this branch exists>`
 - Included: `<bounded scope>`
-- Excluded: `<explicit non-goals>`
+- Excluded: `<important non-goals>`
 - Acceptance criteria: `<observable completion conditions>`
 
-## Changes since branch creation
+## Constraints and decisions
 
-- `<sha or uncommitted>`: `<concise behavior change>`
+- Base/PR target: `<branch>`
+- Role: `<feature/fix/chore/integration>`
+- History: [<filename>.history.md](<filename>.history.md)
+- Decisions: `<durable owner or implementation decisions>`
 
-## Current status
+## Risks or blockers
 
-- Working tree: `<clean/dirty; confirmed intent>`
-- Base relationship: `<ahead/behind/diverged>`
-- Validation: `<commands/results or not run>`
-- Risks/blockers: `<known issues or none known>`
-- Stashes: `<state and disposition>`
+`<Unresolved issue affecting continuation, or none>`
 
-## Next actions
+## Next action
 
-1. `<single immediate next action>`
+`<One immediate safe action>`
 
-## Merge and cleanup
+## Validation checkpoint
 
-- PR base: `<target>`
-- Readiness: `<state>`
-- Required predecessor: `<branch/PR or none>`
-- After merge: append closure history, archive this file/history, update global HISTORY/index, then delete reachable local/remote branches.
+`<Latest meaningful commands/results, explicit deferrals, or not yet required>`
 
+Do not routinely copy tip, clean/dirty state, upstream tracking, ahead/behind counts, or complete stash inventory from Git. Record identifiers only when essential to recovery or a durable milestone.
