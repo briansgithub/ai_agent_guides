@@ -12,9 +12,32 @@ from dataclasses import dataclass
 from pathlib import Path
 
 READ_CHUNK = 1024 * 1024
+
+# Single-file risk bands, applied to the calibrated point estimate.
 LOW_TOKEN_LIMIT = 2_000
 MEDIUM_TOKEN_LIMIT = 8_000
 HIGH_TOKEN_LIMIT = 20_000
+
+# Batch (TOTAL) risk bands. A batch competes for the whole context window, so it
+# is judged on a different scale than one file. Using the single-file thresholds
+# here made any handful of small documents report "high", which pushed agents
+# into asking permission to read files that were individually safe.
+BATCH_LOW_TOKEN_LIMIT = 10_000
+BATCH_MEDIUM_TOKEN_LIMIT = 30_000
+BATCH_HIGH_TOKEN_LIMIT = 75_000
+
+# Calibrated against cl100k_base over Markdown, Python, and YAML sources:
+# ASCII text measured 3.8-5.1 characters per token (mean 4.47); CJK measured
+# about 1.12 characters per token. ESTIMATE is the classification signal; LOW
+# and HIGH bound the reported range. Estimating from the high end (the previous
+# behaviour) inflated every file by roughly 50% and promoted whole bands.
+ASCII_DIVISOR_ESTIMATE = 4.2
+ASCII_DIVISOR_LOW = 5.1
+ASCII_DIVISOR_HIGH = 3.7
+WIDE_DIVISOR_ESTIMATE = 1.1
+WIDE_DIVISOR_LOW = 1.45
+WIDE_DIVISOR_HIGH = 0.95
+
 DEFAULT_SKIPS = {".git", ".agent-artifacts", "__pycache__", "node_modules"}
 
 
@@ -24,6 +47,7 @@ class FileRisk:
     bytes: int
     lines: int | None
     token_low: int | None
+    token_estimate: int | None
     token_high: int | None
     risk: str
     note: str
@@ -47,20 +71,45 @@ def is_probably_binary(path: Path) -> bool:
     return controls / len(sample) > 0.20
 
 
-def classify(token_high: int) -> tuple[str, str]:
-    if token_high <= LOW_TOKEN_LIMIT:
+def estimate_tokens(ascii_characters: int, wide_characters: int, bound: str) -> int:
+    """Estimate tokens for a character mix. `bound` is low, estimate, or high."""
+    divisors = {
+        "low": (ASCII_DIVISOR_LOW, WIDE_DIVISOR_LOW),
+        "estimate": (ASCII_DIVISOR_ESTIMATE, WIDE_DIVISOR_ESTIMATE),
+        "high": (ASCII_DIVISOR_HIGH, WIDE_DIVISOR_HIGH),
+    }
+    ascii_divisor, wide_divisor = divisors[bound]
+    return math.ceil(ascii_characters / ascii_divisor + wide_characters / wide_divisor)
+
+
+def classify(token_estimate: int) -> tuple[str, str]:
+    """Band one file from its calibrated point estimate."""
+    if token_estimate <= LOW_TOKEN_LIMIT:
         return "low", "full read usually safe"
-    if token_high <= MEDIUM_TOKEN_LIMIT:
+    if token_estimate <= MEDIUM_TOKEN_LIMIT:
         return "medium", "search or chunk first"
-    if token_high <= HIGH_TOKEN_LIMIT:
+    if token_estimate <= HIGH_TOKEN_LIMIT:
         return "high", "chunk; justify full read"
     return "extreme", "confirm before full read"
+
+
+def classify_batch(token_estimate: int) -> tuple[str, str]:
+    """Band a whole scan. A batch is judged against the context window."""
+    if token_estimate <= BATCH_LOW_TOKEN_LIMIT:
+        return "low", "reading this set is usually safe"
+    if token_estimate <= BATCH_MEDIUM_TOKEN_LIMIT:
+        return "medium", "prefer the files you actually need"
+    if token_estimate <= BATCH_HIGH_TOKEN_LIMIT:
+        return "high", "select a subset; justify reading all"
+    return "extreme", "confirm before reading this set"
 
 
 def inspect_file(path: Path) -> FileRisk:
     size = path.stat().st_size
     if is_probably_binary(path):
-        return FileRisk(display_path(path), size, None, None, None, "binary", "do not submit as text")
+        return FileRisk(
+            display_path(path), size, None, None, None, None, "binary", "do not submit as text"
+        )
 
     characters = ascii_characters = newlines = 0
     non_ascii_characters = 0
@@ -75,12 +124,16 @@ def inspect_file(path: Path) -> FileRisk:
             last_character = chunk[-1]
 
     lines = 0 if characters == 0 else newlines + (0 if last_character == "\n" else 1)
-    # Tokenization varies by model and content. This range deliberately becomes
-    # more conservative for non-ASCII text instead of presenting false precision.
-    token_low = math.ceil(ascii_characters / 4 + non_ascii_characters / 2)
-    token_high = math.ceil(ascii_characters / 3 + non_ascii_characters * 2)
-    risk, note = classify(token_high)
-    return FileRisk(display_path(path), size, lines, token_low, token_high, risk, note)
+    # Tokenization varies by model and content, so report a range. Routing uses
+    # the calibrated midpoint: banding on the pessimistic end promotes ordinary
+    # files into "confirm before reading" and manufactures needless round trips.
+    token_low = estimate_tokens(ascii_characters, non_ascii_characters, "low")
+    token_estimate = estimate_tokens(ascii_characters, non_ascii_characters, "estimate")
+    token_high = estimate_tokens(ascii_characters, non_ascii_characters, "high")
+    risk, note = classify(token_estimate)
+    return FileRisk(
+        display_path(path), size, lines, token_low, token_estimate, token_high, risk, note
+    )
 
 
 def iter_files(paths: list[Path], recursive: bool) -> list[Path]:
@@ -113,6 +166,10 @@ def token_text(low: int | None, high: int | None) -> str:
     return f"{low:,}-{high:,}"
 
 
+def sort_key(item: FileRisk) -> tuple[int, int]:
+    return (item.token_estimate if item.token_estimate is not None else -1, item.bytes)
+
+
 def run_scan(args: argparse.Namespace) -> int:
     try:
         paths = iter_files([Path(value) for value in args.paths], args.recursive)
@@ -128,7 +185,7 @@ def run_scan(args: argparse.Namespace) -> int:
         except OSError as exc:
             errors.append(f"{display_path(path)}: {exc}")
 
-    results.sort(key=lambda item: (item.token_high or -1, item.bytes), reverse=True)
+    results.sort(key=sort_key, reverse=True)
     visible = results if args.top == 0 else results[: args.top]
     for result in visible:
         line_text = "n/a" if result.lines is None else f"{result.lines:,}"
@@ -139,8 +196,9 @@ def run_scan(args: argparse.Namespace) -> int:
 
     text_results = [item for item in results if item.token_low is not None]
     total_low = sum(item.token_low or 0 for item in text_results)
+    total_estimate = sum(item.token_estimate or 0 for item in text_results)
     total_high = sum(item.token_high or 0 for item in text_results)
-    total_risk, total_note = classify(total_high)
+    total_risk, total_note = classify_batch(total_estimate)
     print(
         f"TOTAL {total_risk} {len(results)} files, "
         f"{sum(item.bytes for item in results):,} B, "

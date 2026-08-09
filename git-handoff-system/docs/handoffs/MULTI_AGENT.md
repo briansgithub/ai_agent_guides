@@ -1,6 +1,6 @@
 # Multi-Agent Parallel Work (Git Worktrees)
 
-Use this only when two or more agents (Cursor, Google Antigravity/Gemini, or mixed) are actually working on the same repository at once. Merely using an IDE or considering future parallel work does not require loading this guide.
+Use this only when two or more agents are actually working on the same repository at once. Merely using an IDE or considering future parallel work does not require loading this guide.
 
 ## Rule
 
@@ -34,13 +34,30 @@ One folder + one checkout forces branch switching, stashing, file overwrites, lo
    ```bash
    git worktree add -b feature/foo ../repo-wt-foo main
    ```
-3. Open **that folder** as the agent’s workspace in Cursor or Antigravity (not the primary clone unless this agent owns it).
+3. Open **that folder** as the agent’s workspace (not the primary clone unless this agent owns it).
 4. In that worktree: create the mirrored handoff + `.history.md`, implement, validate, commit on that branch only.
 5. When finished: push/PR from that branch, then after merge follow the normal archive + branch-delete protocol.
 6. Remove the worktree when done:
    ```bash
    git worktree remove <path-to-new-folder>
    ```
+
+### Layout, history, and ownership
+
+- Put worktrees beside the primary clone (for example `../repo-wt-foo`); a repository or another worktree must never contain one. Use the repository's configured sibling root and naming pattern.
+- A worktree is another checkout of a normal branch, not a disposable copy. Its commits are visible through `git log --all`/`git branch -a`; `git push` publishes that branch only. Merge/PR from the primary/default checkout is what makes the work part of `main`. If “sync” direction is unclear, ask before changing branches or deleting worktrees.
+- Record the worktree path, branch, and owned/no-go paths in the active handoff. If another agent has changed an overlapping path, stop before overwriting, notify the owner, and let an authorized Git merge/review resolve it. Never reset, stash, or delete another agent's WIP.
+
+### Completion and cleanup
+
+From the primary/default checkout, after an authorized merge or PR landing:
+
+1. Confirm the feature tip or merge commit is reachable from the remote default branch (`git merge-base --is-ancestor`).
+2. Archive the branch handoff/history and update the close ledger/index as required.
+3. Run `git worktree list`, then remove the sibling worktree and delete the local branch with `git branch -d`.
+4. Delete the remote branch only with owner authorization and after reachability is verified.
+
+If the worktree is dirty or the feature is not merged into the default branch, stop and preserve it—even if its branch was pushed. Do not use `git worktree remove --force`, `git branch -D`, or delete a worktree owned by another agent without explicit authorization.
 
 List worktrees anytime:
 
@@ -59,26 +76,18 @@ git worktree list
   - size limits, links, and archive pairs.
 - It does **not** fail solely because another local branch is checked out in a different worktree and its handoff files are not present here yet.
 
-## Cursor and Antigravity
+## Pointing agents at worktrees
 
 - **Cursor:** File → Open Folder on the worktree path; one chat/agent per worktree folder.
 - **Google Antigravity / Gemini:** point the agent at the worktree folder (Antigravity often creates worktrees under its own path—treat that folder as the workspace and keep handoffs updated there).
-- Keep `AGENTS.md` / `GEMINI.md` / `.cursor/rules/` in the repo so every worktree inherits the same protocol after checkout.
-- Opening Android Studio or receiving a routine IDE follow-up does not itself require a formal implementation plan. Use the planning thresholds in `AGENTS.md` and reuse any existing plan instead of proposing one on every prompt.
+- Keep `AGENTS.md` and the per-tool shims (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.github/copilot-instructions.md`) in the repo so every worktree inherits the same protocol after checkout.
+- Opening an IDE or receiving a routine follow-up does not itself require a formal implementation plan. Use the planning thresholds in `AGENTS.md` and reuse any existing plan instead of proposing one on every prompt.
 
-## Android Studio (Android apps)
+## IDE-specific worktree notes
 
-Git allows only one checkout of a given branch. If a worktree already has `feature/foo`, Android Studio’s branch switcher in another folder will fail with “already used by worktree…”.
+Git allows only one checkout of a given branch, so any IDE whose branch switcher targets a branch held by another worktree will refuse it. Open the worktree folder as its own project instead of switching branches.
 
-**Smoother device-run workflow:**
-
-1. Treat each worktree as a **separate Android Studio project** — `File → Open` the worktree folder (e.g. `…/repo-wt-foo`), do not open the primary clone and try to check out that branch.
-2. After creating a worktree, copy gitignored local machine files the build needs (especially `local.properties` with the Android SDK path) from the primary clone into the new folder.
-3. Expect the **first** open/sync of a new worktree to be slow (Gradle + indexes). Later opens via *Recent Projects* are usually much faster; `~/.gradle` is shared across projects.
-4. Prefer **one** Android Studio window for the branch you are flashing to a device; leave agents editing in Cursor/Antigravity on their worktree paths.
-5. Use the primary clone in Android Studio only for the default branch (e.g. `main`), or when no other worktree holds the branch you need.
-
-**Do not:** switch branches inside one Android Studio window to reach a branch already checked out in another worktree.
+Toolchains that need gitignored machine-local files (SDK paths, credentials, editor state) require copying those files into each new worktree, and their first index or sync will be slow. Record the specific files and any per-IDE steps for this repository in [REPOSITORY.md](REPOSITORY.md) rather than here — this guide stays toolchain-neutral.
 
 ## What not to do
 

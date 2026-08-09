@@ -7,7 +7,7 @@ Permanent handoffs live in `docs/handoffs/` and are committed with the repositor
 1. Preserve unrelated user work and never assume uncommitted changes are disposable.
 2. Store durable context in handoffs; obtain transient Git facts from Git when they are relevant.
 3. Active handoffs are replacement-style. Per-branch histories and global `HISTORY.md` are append-only.
-4. Keep `AGENTS.md` below 3,500 characters, IDE shims below 600, active/archived handoffs below 6,000, each history segment below 12,000, and on-demand policy documents below 20,000 characters.
+4. Keep `AGENTS.md` below 5,000 characters, per-tool shims below 600, active/archived handoffs below 6,000, each history segment below 12,000, and on-demand policy documents below 20,000 characters. `scripts/validate_handoffs.py` enforces these exact numbers.
 5. Verify only documentation claims that affect the current action, and distinguish Git-verified facts, owner decisions, unknowns, and recommendations.
 6. Keep relevant handoff updates with the commit or PR they describe.
 7. Never delete branch documentation; archive it when the branch closes.
@@ -49,14 +49,18 @@ When agents are actually concurrent, read `MULTI_AGENT.md` and confirm this fold
 
 ## Planning and context budget
 
-Do not create a formal implementation plan for straightforward, localized, or clearly specified work. IDE context, including Android Studio, does not itself justify a plan. Use a plan only when the user requests it or when ambiguity, risk, multiple dependent phases, cross-system coordination, or multi-session continuity makes it useful. Reuse rather than repeatedly restating a plan.
+Do not create a formal implementation plan for straightforward, localized, or clearly specified work. IDE context does not itself justify a plan. Use a plan only when the user requests it or when ambiguity, risk, multiple dependent phases, cross-system coordination, or multi-session continuity makes it useful. Reuse rather than repeatedly restating a plan.
 
-Start investigations narrowly. Before emitting unknown or potentially large files into model context, batch-check them locally with `python scripts/context_probe.py scan <paths>`. Apply the same decision to individual and aggregate `TOTAL` risk. Estimates are heuristic routing signals, not exact tokenizer counts:
+Start investigations narrowly. Prefer search over reading: locate with grep/glob and read the lines that matter. Batch independent reads and commands into one step, do not re-read a file you just wrote, and cite `path:line` instead of pasting file contents back to the user.
+
+Probe before emitting *generated or unfamiliar* artifacts into model context — logs, build output, data dumps, vendored or minified trees: `python scripts/context_probe.py scan <paths>`. Source and documentation you already have a reason to open do not need a preflight; the probe costs a round trip and should not be spent on files a targeted read would handle. Estimates are calibrated routing signals, not exact tokenizer counts. Per-file bands:
 
 - **low:** a full read is normally reasonable;
 - **medium:** search or retrieve a targeted chunk first;
 - **high:** require a concrete task reason before a full read;
 - **extreme:** ask before a full read unless exhaustive review was explicitly requested or is essential to an authorized high-risk operation.
+
+The `TOTAL` line bands the whole scan on its own larger scale, because a batch competes for the context window rather than a single file's budget. Apply both: a set can be safe while one file in it is not, and a set of individually safe files can still be too much to read at once.
 
 For append-only histories, logs, and reports, search for known identifiers first. Otherwise retrieve the recent end with `context_probe.py tail`, preserving normal order within the chunk, and page backward with `chunk` only when the current evidence requires it. Do not use tail-first reading for source code, configuration, manifests, or other files whose opening structure controls interpretation.
 
@@ -84,7 +88,9 @@ Create an adjacent history for each new branch. Append only meaningful milestone
 - material validation results, PR events, rebases, closure, or recovery actions;
 - stash disposition affecting recoverability.
 
-Do not log routine reads, status checks, every prompt, every commit, or facts already available from Git. Never rewrite older entries; append a correction. Keep each history segment below 12,000 characters; freeze older content in numbered segments and continue in a new file. When consulting history, begin with the newest relevant segment or tail chunk and move backward only as needed.
+Do not log routine reads, status checks, every prompt, every commit, or facts already available from Git. Never rewrite older entries; append a correction. When consulting history, begin with the newest relevant segment or tail chunk and move backward only as needed.
+
+Keep each history segment below 12,000 characters. To roll over, freeze the current file and continue in a numbered segment beside it — `feature/foo.history.md` is followed by `feature/foo.history.2.md`, then `.3.md`. The global ledger rolls over into `HISTORY/<year>.md`. The validator recognises both forms and gives them the full history budget; any other naming falls back to the 6,000-character handoff limit.
 
 ## End of meaningful work
 
@@ -109,7 +115,7 @@ Verification should be proportional:
 - normal behavior changes: targeted tests plus affected lint/type checks when useful;
 - shared interfaces, dependencies, build configuration, schemas/migrations, security/authentication, concurrency, persistence, PRs, and releases: broader integration or full-suite checks as appropriate.
 
-For noisy commands, prefer `python scripts/compact_check.py --name <label> -- <command>`. It writes complete failure output to a temporary local log while returning only a bounded tail to the agent; `--quiet` suppresses successful output. Automatically attempt no more than two diagnose/fix/retest cycles for the same failure. If the failure persists or the next check materially expands validation scope, ask before continuing unless the owner already requested broader validation.
+For noisy commands, prefer `python scripts/compact_check.py --name <label> -- <command>`. It writes complete failure output to a temporary local log while returning only a bounded tail to the agent; `--quiet` suppresses successful output, and `--shell` runs through the platform shell for pipelines, shell builtins, and wrapper scripts such as `./gradlew` or `gradlew.bat`. Report the exact command and its result. Automatically attempt no more than two diagnose/fix/retest cycles for the same failure. If the failure persists or the next check materially expands validation scope, ask before continuing unless the owner already requested broader validation.
 
 Merge-ready means scope is complete, unrelated WIP is absent, the configured checks pass or explicit deferrals are recorded, no known high-severity regression remains, the base is correct, and the handoff reflects residual risks. Never imply that unrun validation passed.
 
@@ -122,9 +128,11 @@ Merge-ready means scope is complete, unrelated WIP is absent, the configured che
 5. Append one close entry to global `HISTORY.md`.
 6. Remove the branch from active `README.md`; update the default-branch handoff only if durable context changed.
 7. Delete remote/local branches only after reachability verification, then commit and push the archival cleanup when authorized.
-8. Remove obsolete worktrees when their unique work is safely merged or pushed.
+8. From the primary checkout, run `git worktree list`, remove the obsolete sibling worktree only after its feature work is merged and reachable from the default branch, then delete the local branch with `git branch -d`; delete the remote branch only after authorization. A pushed but unmerged branch stays preserved unless the owner explicitly parks or abandons it.
 
 Use `git branch -d`; use `-D` only after verified reachability and a known-safe refusal.
+
+Worktrees are sibling checkouts of normal branches, not separate histories. A feature commit is already in Git's object history, but it reaches the default branch only through an authorized merge/PR. `git push` alone does not merge it. Never force-remove a dirty/unmerged worktree or another agent's checkout.
 
 ## Stashes and recoverability
 
@@ -133,17 +141,19 @@ Delete a stash only after comparing it with reachable work and establishing that
 ## New branches
 
 1. Update from the remote default branch when authorized and relevant.
-2. Create one narrow `feature/`, `fix/`, or `chore/` branch; use a dedicated worktree for actual concurrent work.
+2. Create one narrow `feature/`, `fix/`, or `chore/` branch; use a dedicated sibling worktree for actual concurrent work and record its path/owned paths in the handoff.
 3. Create the mirrored handoff/history from templates and record the objective and base milestone.
 4. Keep commits purpose-focused and exclude secrets, generated output, IDE-local state, and unrelated formatting.
 5. Use the standing validation profile, merge promptly when ready, and complete archival after merge.
 
 ## Automated validation
 
-`python scripts/validate_handoffs.py` checks required files, differentiated size limits, links, active/archive pairs, and append-only history when a base ref is available. Use `--quiet` for silent success and `--verbose` only when worktree, branch-tracking, or stash diagnostics are relevant. CI runs the structural validator through `.github/workflows/handoff-validation.yml`.
+`python scripts/validate_handoffs.py` checks required files, differentiated size limits, links, active/archive pairs, and append-only history when a base ref is available. Use `--quiet` for silent success and `--verbose` only when worktree, branch-tracking, or stash diagnostics are relevant. Add `--installed` in a repository that has installed the kit to also reject unfilled template placeholders in live branch records; the kit's own repository ships those placeholders deliberately and does not use the flag.
 
 `scripts/context_probe.py` performs local size/token-risk preflight and bounded recent/backward retrieval. `scripts/compact_check.py` keeps complete command logs out of AI context while preserving failure artifacts for targeted follow-up.
 
+`scripts/test_agent_tools.py` covers all three tools with the standard library only: `python -m unittest discover -s scripts -p "test_*.py"`. CI runs the tests and the structural validator on Linux and Windows through `.github/workflows/handoff-validation.yml`. If `python` is not on PATH, use `python3` or `py`.
+
 ## Compact implementation-agent prompt
 
-> Follow `AGENTS.md`. Start with requested files and concise Git status. Do not plan straightforward work. Size-probe uncertain context; search or read recent append-only chunks before expanding backward. Make the narrowest reliable change, run compact risk-proportional checks, and ask before optional extreme-context, broad-validation, or repeated-failure expansion. Update durable handoff context once only when it materially changes.
+> Follow `AGENTS.md`. Start with requested files and concise Git status. Do not plan straightforward work. Search before reading and batch independent calls; size-probe generated or unfamiliar artifacts, and read recent append-only chunks before expanding backward. Make the narrowest reliable change, run compact risk-proportional checks, report the exact commands run, and ask before optional extreme-context, broad-validation, or repeated-failure expansion. Update durable handoff context once only when it materially changes.

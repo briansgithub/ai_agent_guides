@@ -14,10 +14,15 @@ from urllib.parse import unquote
 POLICY_MAX_CHARACTERS = 20_000
 HANDOFF_MAX_CHARACTERS = 6_000
 HISTORY_MAX_CHARACTERS = 12_000
+# Always-loaded entry points. AGENTS.md carries every default an agent applies
+# without being asked, so it gets room for one imperative rule per line; dense
+# comma-packed prose fits a smaller budget but is followed less reliably.
 ENTRYPOINT_LIMITS = {
-    "AGENTS.md": 3_500,
-    "GEMINI.md": 400,
+    "AGENTS.md": 5_000,
+    "CLAUDE.md": 600,
+    "GEMINI.md": 600,
     ".cursor/rules/handoff-maintenance.mdc": 600,
+    ".github/copilot-instructions.md": 600,
 }
 POLICY_FILES = {
     "MASTER_HANDOFF.md",
@@ -25,12 +30,24 @@ POLICY_FILES = {
     "MULTI_AGENT.md",
     "README.md",
 }
+# Link text is presentational; only the branch name and the two targets are
+# contractual. Pinning the label to a literal `handoff`/`history` silently
+# dropped naturally worded rows out of the index.
 INDEX_ROW = re.compile(
-    r"^\|\s*`(?P<branch>[^`]+)`\s*\|.*"
-    r"\[(?:handoff|main\.md)\]\((?P<handoff>[^)]+)\)\s*\|"
-    r"\s*\[history\]\((?P<history>[^)]+)\)\s*\|$"
+    r"^\|\s*`(?P<branch>[^`]+)`\s*\|[^|]*\|"
+    r"\s*\[[^\]]*\]\((?P<handoff>[^)]+)\)\s*\|"
+    r"\s*\[[^\]]*\]\((?P<history>[^)]+)\)\s*\|$"
 )
 MARKDOWN_LINK = re.compile(r"!?\[[^\]]*]\((?P<target>[^)]+)\)")
+# `<branch>.history.md` plus the documented rollover forms: `<branch>.history.2.md`
+# for per-branch segments and `HISTORY/<year>.md` for the global ledger.
+HISTORY_SEGMENT = re.compile(r"^(?P<stem>.+)\.history(?:\.\d+)?\.md$")
+# Unfilled template text. Only applied to live branch records, and only after
+# fenced blocks and HTML comments are stripped, because policy documents use
+# `<branch>` and `<path>` legitimately as command syntax.
+PLACEHOLDER = re.compile(r"<[^<>\n]{2,}>|YYYY-MM-DD")
+FENCED_BLOCK = re.compile(r"^```.*?^```", re.MULTILINE | re.DOTALL)
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def run_git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -48,6 +65,16 @@ def branch_paths(handoffs: Path, branch: str) -> tuple[Path, Path]:
     return handoffs / f"{branch}.md", handoffs / f"{branch}.history.md"
 
 
+def strip_documentation(text: str) -> str:
+    """Drop fenced blocks and HTML comments.
+
+    Format examples and commented-out templates are documentation, not live
+    content: an example index row must not register as an active branch, and a
+    sample link must not be resolved against the filesystem.
+    """
+    return FENCED_BLOCK.sub("", HTML_COMMENT.sub("", text))
+
+
 def read_text(path: Path, errors: list[str]) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -56,9 +83,21 @@ def read_text(path: Path, errors: list[str]) -> str:
         return ""
 
 
+def is_history_file(path: Path, handoffs: Path) -> bool:
+    """True for any append-only record, including documented rollover segments."""
+    relative = path.relative_to(handoffs)
+    parts = relative.parts
+    if path.name == "HISTORY.md":
+        return True
+    # Global ledger rollover: docs/handoffs/HISTORY/2026.md
+    if "HISTORY" in parts[:-1]:
+        return True
+    return bool(HISTORY_SEGMENT.match(path.name))
+
+
 def size_limit(path: Path, handoffs: Path) -> int:
     relative = path.relative_to(handoffs)
-    if path.name == "HISTORY.md" or path.name.endswith(".history.md"):
+    if is_history_file(path, handoffs):
         return HISTORY_MAX_CHARACTERS
     if path.name in POLICY_FILES and len(relative.parts) == 1:
         return POLICY_MAX_CHARACTERS
@@ -96,7 +135,7 @@ def validate_entrypoint_sizes(root: Path, errors: list[str]) -> None:
 def validate_links(markdown_files: list[Path], errors: list[str]) -> None:
     ignored_prefixes = ("http://", "https://", "mailto:", "#", "<")
     for path in markdown_files:
-        text = read_text(path, errors)
+        text = strip_documentation(read_text(path, errors))
         for match in MARKDOWN_LINK.finditer(text):
             raw_target = match.group("target").strip().split(maxsplit=1)[0]
             if "<" in raw_target or ">" in raw_target:
@@ -112,7 +151,7 @@ def validate_links(markdown_files: list[Path], errors: list[str]) -> None:
 
 def parse_index(handoffs: Path, errors: list[str]) -> dict[str, tuple[Path, Path]]:
     index = handoffs / "README.md"
-    text = read_text(index, errors)
+    text = strip_documentation(read_text(index, errors))
     entries: dict[str, tuple[Path, Path]] = {}
     for line in text.splitlines():
         match = INDEX_ROW.match(line)
@@ -169,6 +208,13 @@ def validate_active_pairs(
             errors.append(f"{branch}: missing active history {history.relative_to(root)}")
         if branch not in entries:
             errors.append(f"{branch}: missing from docs/handoffs/README.md active index")
+            if branch == current_branch and set(entries) == {"main"} and branch != "main":
+                errors.append(
+                    f"  hint: the kit ships an index for `main`. If `{branch}` is this "
+                    f"repository's default branch, rename docs/handoffs/main.md and "
+                    f"main.history.md to `{branch}.md` / `{branch}.history.md` and update "
+                    f"the index row and REPOSITORY.md."
+                )
 
     for branch, (handoff, history) in entries.items():
         expected_handoff, expected_history = branch_paths(handoffs, branch)
@@ -197,13 +243,30 @@ def validate_archive_pairs(root: Path, handoffs: Path, errors: list[str]) -> Non
         for path in archive.rglob("*.md")
         if path.name != "README.md"
     }
+    # Group by branch stem so that `foo.md`, `foo.history.md`, and any numbered
+    # rollover segment `foo.history.2.md` count as one archived branch. Requiring
+    # a literal `<name>.history.md` peer for every file rejected the segment
+    # naming that BRANCH_HISTORY.md instructs authors to use.
+    handoffs_by_stem: dict[str, str] = {}
+    histories_by_stem: dict[str, list[str]] = {}
     for relative in sorted(files):
-        if relative.endswith(".history.md"):
-            peer = relative.removesuffix(".history.md") + ".md"
+        match = HISTORY_SEGMENT.match(Path(relative).name)
+        if match:
+            stem = (Path(relative).parent / match.group("stem")).as_posix()
+            histories_by_stem.setdefault(stem, []).append(relative)
         else:
-            peer = relative.removesuffix(".md") + ".history.md"
-        if peer not in files:
-            errors.append(f"archive/{relative}: missing paired archive file {peer}")
+            handoffs_by_stem[relative.removesuffix(".md")] = relative
+
+    for stem, relative in sorted(handoffs_by_stem.items()):
+        if stem not in histories_by_stem:
+            errors.append(
+                f"archive/{relative}: missing paired archive history {stem}.history.md"
+            )
+    for stem, segments in sorted(histories_by_stem.items()):
+        if stem not in handoffs_by_stem:
+            errors.append(
+                f"archive/{segments[0]}: missing paired archive handoff {stem}.md"
+            )
 
 
 def report_parallel_state(
@@ -300,6 +363,31 @@ def report_parallel_state(
             )
 
 
+def validate_no_placeholders(
+    root: Path, handoffs: Path, markdown_files: list[Path], errors: list[str]
+) -> None:
+    """Reject unfilled template text in live handoffs (`--installed` only).
+
+    The kit ships `main.md` / `main.history.md` with placeholders on purpose, so
+    this runs opt-in: a repository that has installed the kit turns it on, the
+    kit's own repository does not.
+    """
+    for path in markdown_files:
+        relative = path.relative_to(handoffs)
+        if relative.parts[:1] == ("templates",):
+            continue
+        # Policy documents legitimately show `<branch>`-style command syntax.
+        if path.name in POLICY_FILES or relative.as_posix() == "archive/README.md":
+            continue
+        text = strip_documentation(read_text(path, errors))
+        found = sorted({match.group(0) for match in PLACEHOLDER.finditer(text)})
+        if found:
+            shown = ", ".join(found[:4]) + ("..." if len(found) > 4 else "")
+            errors.append(
+                f"{path.relative_to(root)}: unfilled template placeholder(s): {shown}"
+            )
+
+
 def resolve_base_ref(root: Path, explicit: str | None) -> str | None:
     if explicit:
         return explicit
@@ -310,7 +398,11 @@ def resolve_base_ref(root: Path, explicit: str | None) -> str | None:
 
 
 def validate_append_only(
-    root: Path, markdown_files: list[Path], base_ref: str | None, errors: list[str]
+    root: Path,
+    handoffs: Path,
+    markdown_files: list[Path],
+    base_ref: str | None,
+    errors: list[str],
 ) -> None:
     if not base_ref:
         return
@@ -320,7 +412,7 @@ def validate_append_only(
 
     for path in markdown_files:
         relative = path.relative_to(root).as_posix()
-        if path.name != "HISTORY.md" and not path.name.endswith(".history.md"):
+        if not is_history_file(path, handoffs):
             continue
         previous = run_git(root, "show", f"{base_ref}:{relative}")
         if previous.returncode != 0:
@@ -346,16 +438,24 @@ def main() -> int:
         action="store_true",
         help="emit nothing when validation passes",
     )
+    parser.add_argument(
+        "--installed",
+        action="store_true",
+        help="also reject unfilled template placeholders (use in repositories that "
+        "have installed the kit, not in the kit's own repository)",
+    )
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]
     handoffs = root / "docs" / "handoffs"
     errors: list[str] = []
 
+    # AGENTS.md is authoritative. The per-tool shims that point at it are
+    # optional: a shop that uses only one agent should be able to delete the
+    # others without failing validation. Any shim that is present is still
+    # budget-checked by validate_entrypoint_sizes.
     required = [
         root / "AGENTS.md",
-        root / "GEMINI.md",
-        root / ".cursor" / "rules" / "handoff-maintenance.mdc",
         root / "scripts" / "context_probe.py",
         root / "scripts" / "compact_check.py",
         handoffs / "MASTER_HANDOFF.md",
@@ -378,8 +478,10 @@ def main() -> int:
     entries = parse_index(handoffs, errors)
     validate_active_pairs(root, handoffs, entries, errors, args.verbose)
     validate_archive_pairs(root, handoffs, errors)
+    if args.installed:
+        validate_no_placeholders(root, handoffs, markdown_files, errors)
     validate_append_only(
-        root, markdown_files, resolve_base_ref(root, args.base_ref), errors
+        root, handoffs, markdown_files, resolve_base_ref(root, args.base_ref), errors
     )
     if args.verbose:
         report_parallel_state(root, handoffs, entries)
