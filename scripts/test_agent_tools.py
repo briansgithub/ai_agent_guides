@@ -222,6 +222,69 @@ class SizeRoutingTests(unittest.TestCase):
             self.assertEqual(limit, 600, f"{shim} must match the documented shim budget")
 
 
+class ShimConsistencyTests(unittest.TestCase):
+    """Every per-tool entry point must redirect, never restate.
+
+    Tool-specific files take precedence over AGENTS.md in clients that read
+    both. A shim that carried its own copy of the rules would therefore win
+    over the authoritative file and silently go stale.
+    """
+
+    def shims(self) -> list[tuple[str, int]]:
+        return [
+            (relative, limit)
+            for relative, limit in validate_handoffs.ENTRYPOINT_LIMITS.items()
+            if relative != "AGENTS.md"
+        ]
+
+    def present_shims(self) -> list[tuple[Path, int]]:
+        found = [(ROOT / rel, limit) for rel, limit in self.shims() if (ROOT / rel).is_file()]
+        self.assertTrue(found, "no shims found on disk; ROOT resolution is wrong")
+        return found
+
+    def test_every_shim_points_at_agents_md(self) -> None:
+        for path, _limit in self.present_shims():
+            text = path.read_text(encoding="utf-8")
+            self.assertIn(
+                "AGENTS.md", text, f"{path.name} does not redirect to AGENTS.md"
+            )
+
+    def test_no_shim_restates_the_rules(self) -> None:
+        for path, limit in self.present_shims():
+            text = path.read_text(encoding="utf-8")
+            self.assertLess(len(text), limit, f"{path} exceeds its {limit}-character budget")
+            body = [line for line in text.splitlines() if line.strip()]
+            self.assertLessEqual(
+                len(body), 6, f"{path} looks like a ruleset, not a pointer"
+            )
+
+    def test_shim_budgets_are_uniform(self) -> None:
+        for relative, limit in self.shims():
+            self.assertEqual(
+                limit,
+                validate_handoffs.SHIM_LIMIT,
+                f"{relative} deviates from the shared shim budget",
+            )
+
+    def test_readme_documents_every_registered_shim(self) -> None:
+        """A shim nobody can find is a shim nobody maintains."""
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        # assertTrue, not assertIn: a miss on an 8 KB haystack would dump the
+        # whole README into the failure output.
+        missing = [rel for rel, _ in self.shims() if rel not in readme]
+        self.assertFalse(
+            missing, f"registered but absent from README.md: {', '.join(missing)}"
+        )
+
+    def test_agents_md_is_the_only_authoritative_file(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertGreater(
+            len(agents),
+            validate_handoffs.SHIM_LIMIT,
+            "AGENTS.md is shim-sized; the rules may have been moved out of it",
+        )
+
+
 class IndexRowTests(unittest.TestCase):
     def match(self, row: str):
         return validate_handoffs.INDEX_ROW.match(row)

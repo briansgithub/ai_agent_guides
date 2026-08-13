@@ -17,12 +17,34 @@ HISTORY_MAX_CHARACTERS = 12_000
 # Always-loaded entry points. AGENTS.md carries every default an agent applies
 # without being asked, so it gets room for one imperative rule per line; dense
 # comma-packed prose fits a smaller budget but is followed less reliably.
+# Every entry but AGENTS.md is a pointer to it, never a copy of the rules:
+# tool-specific files take precedence over AGENTS.md in clients that read both,
+# so a pointer redirects to the single source instead of letting a stale copy
+# win. All are optional — a repository deletes the shims it does not use.
+SHIM_LIMIT = 600
 ENTRYPOINT_LIMITS = {
     "AGENTS.md": 5_000,
-    "CLAUDE.md": 600,
-    "GEMINI.md": 600,
-    ".cursor/rules/handoff-maintenance.mdc": 600,
-    ".github/copilot-instructions.md": 600,
+    # Original five.
+    "CLAUDE.md": SHIM_LIMIT,
+    "GEMINI.md": SHIM_LIMIT,
+    ".cursor/rules/handoff-maintenance.mdc": SHIM_LIMIT,
+    ".github/copilot-instructions.md": SHIM_LIMIT,
+    # Paths verified against the dotagent format registry.
+    ".clinerules": SHIM_LIMIT,
+    ".windsurfrules": SHIM_LIMIT,
+    ".rules": SHIM_LIMIT,
+    "CONVENTIONS.md": SHIM_LIMIT,
+    ".junie/guidelines.md": SHIM_LIMIT,
+    ".amazonq/rules/agents.md": SHIM_LIMIT,
+    ".roo/rules/agents.md": SHIM_LIMIT,
+    "best_practices.md": SHIM_LIMIT,
+    # Plausible but unverified. A wrong guess costs one unread file; a miss
+    # means the tool silently applies no rules at all.
+    "QWEN.md": SHIM_LIMIT,
+    "AGENT.md": SHIM_LIMIT,
+    ".trae/rules/project_rules.md": SHIM_LIMIT,
+    ".idx/airules.md": SHIM_LIMIT,
+    ".kilocode/rules/agents.md": SHIM_LIMIT,
 }
 POLICY_FILES = {
     "MASTER_HANDOFF.md",

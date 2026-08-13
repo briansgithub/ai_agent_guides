@@ -1,6 +1,6 @@
 # Portable Git Handoff System
 
-Reusable branch-handoff framework for any agent that honors `AGENTS.md`, with shims for Claude, Gemini, Cursor, and Copilot.
+Reusable branch-handoff framework for any agent that honors `AGENTS.md`, with pointer shims for every other rule-file convention in common use.
 
 Version: see [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md). Record the installed version in the repository's handoff history so an upgrade can tell what it is replacing.
 
