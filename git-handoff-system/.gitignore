@@ -1,7 +1,0 @@
-# The handoff tools are run often enough that bytecode would otherwise be
-# committed by any repository installing this kit.
-__pycache__/
-*.py[cod]
-
-# compact_check.py --artifact-dir target, when pointed inside the repository.
-.agent-artifacts/
