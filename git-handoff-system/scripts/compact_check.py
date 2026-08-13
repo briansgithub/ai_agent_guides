@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -67,8 +68,48 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--timeout-seconds", type=positive_integer)
     parser.add_argument("--keep-success-log", action="store_true")
     parser.add_argument("--quiet", action="store_true", help="emit nothing when the command passes")
+    parser.add_argument(
+        "--shell",
+        action="store_true",
+        help="run through the platform shell, enabling pipelines, builtins, and "
+        "wrapper scripts such as ./gradlew or gradlew.bat",
+    )
+    parser.add_argument(
+        "--keep-logs",
+        type=positive_integer,
+        default=20,
+        help="failure logs to retain per artifact directory (default: 20)",
+    )
     parser.add_argument("command", nargs=argparse.REMAINDER, help="command and arguments after --")
     return parser
+
+
+def prune_logs(directory: Path, keep: int) -> None:
+    """Bound unattended growth of the failure-log directory."""
+    try:
+        logs = sorted(directory.glob("*.log"), key=lambda item: item.stat().st_mtime)
+    except OSError:
+        return
+    for stale in logs[: max(0, len(logs) - keep)]:
+        try:
+            stale.unlink()
+        except OSError:
+            pass
+
+
+def terminate_tree(process: subprocess.Popen[bytes]) -> None:
+    """Kill the command and any children it spawned (build daemons, test runners)."""
+    if sys.platform == "win32":
+        subprocess.run(
+            ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+            capture_output=True,
+            check=False,
+        )
+        return
+    try:
+        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+    except (OSError, ProcessLookupError):
+        process.kill()
 
 
 def main() -> int:
@@ -97,27 +138,45 @@ def main() -> int:
     return_code = 1
     timed_out = False
     launch_error: OSError | None = None
+    # A shell run takes the command as one string so pipelines and wrapper
+    # scripts behave as typed; the caller owns any quoting inside that string.
+    # Otherwise argv is passed through unchanged.
+    target: str | list[str] = " ".join(command) if args.shell else command
+    # New process group so a timeout can reap the whole tree, not just the child.
+    isolation: dict[str, object] = (
+        {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+        if sys.platform == "win32"
+        else {"start_new_session": True}
+    )
     with log_path.open("w", encoding="utf-8", errors="replace") as log:
         try:
-            completed = subprocess.run(
-                command,
+            process = subprocess.Popen(
+                target,
                 cwd=working_directory,
                 stdout=log,
                 stderr=subprocess.STDOUT,
-                text=True,
-                check=False,
-                timeout=args.timeout_seconds,
+                shell=args.shell,
                 env=os.environ.copy(),
+                **isolation,
             )
-            return_code = completed.returncode
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            return_code = 124
-            log.write(f"\nTimed out after {args.timeout_seconds} seconds.\n")
         except OSError as exc:
             launch_error = exc
             return_code = 127
             log.write(f"\nFailed to launch command: {exc}\n")
+            if not args.shell:
+                log.write(
+                    "Hint: this runs without a shell. Use --shell for pipelines, "
+                    "shell builtins, or wrapper scripts such as ./gradlew.\n"
+                )
+        else:
+            try:
+                return_code = process.wait(timeout=args.timeout_seconds)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                return_code = 124
+                terminate_tree(process)
+                process.wait()
+                log.write(f"\nTimed out after {args.timeout_seconds} seconds.\n")
 
     elapsed = time.monotonic() - start
     shown_path = relative_or_absolute(log_path, working_directory)
@@ -129,6 +188,7 @@ def main() -> int:
             print(f"PASS {args.name} ({elapsed:.1f}s{suffix})")
         return 0
 
+    prune_logs(artifact_directory, args.keep_logs)
     reason = "timeout" if timed_out else "launch error" if launch_error else f"exit {return_code}"
     print(f"FAIL {args.name} ({reason}, {elapsed:.1f}s)")
     print(f"Full log: {shown_path}")
