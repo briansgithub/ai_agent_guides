@@ -11,8 +11,9 @@
 
 - Base/PR target: `<branch>`
 - Role: `<feature/fix/chore/integration>`
-- Worktree: `<sibling path; one branch only>`
-- Owned paths: `<paths this branch may edit; no-go paths if useful>`
+- Coordination tier: `<durable or concurrent>`
+- Worktree: `<primary checkout for one durable agent; sibling path when concurrent>`
+- Owned paths: `<required when concurrent; otherwise optional paths/no-go paths>`
 - History: [<filename>.history.md](<filename>.history.md)
 - Decisions: `<durable owner or implementation decisions>`
 
@@ -31,7 +32,7 @@
 ## Merge and cleanup
 
 - Primary checkout: `<path used for merge/cleanup>`
-- After merge: verify reachability from the remote default branch, archive this handoff/history, remove the sibling worktree, then delete local/remote branches only with authorization.
+- After merge: verify reachability and archive this handoff/history; obtain explicit authorization before removing the sibling worktree or deleting local/remote branches.
 
 Do not routinely copy tip, clean/dirty state, upstream tracking, ahead/behind counts, or complete stash inventory from Git. Record identifiers only when essential to recovery or a durable milestone.
 
@@ -48,6 +49,7 @@ Do not routinely copy tip, clean/dirty state, upstream tracking, ahead/behind co
 ## Constraints and decisions
 - Base/PR target: main
 - Role: feature
+- Coordination tier: concurrent
 - Worktree: ../app-wt-session-expiry
 - Owned paths: src/auth/**, tests/auth/**. No-go: src/billing/**.
 - History: [feature/session-expiry.history.md](session-expiry.history.md)

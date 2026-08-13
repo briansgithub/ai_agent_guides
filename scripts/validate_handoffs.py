@@ -17,17 +17,42 @@ HISTORY_MAX_CHARACTERS = 12_000
 # Always-loaded entry points. AGENTS.md carries every default an agent applies
 # without being asked, so it gets room for one imperative rule per line; dense
 # comma-packed prose fits a smaller budget but is followed less reliably.
+# Every entry but AGENTS.md is a pointer to it, never a copy of the rules:
+# tool-specific files take precedence over AGENTS.md in clients that read both,
+# so a pointer redirects to the single source instead of letting a stale copy
+# win. All are optional — a repository deletes the shims it does not use.
+SHIM_LIMIT = 600
 ENTRYPOINT_LIMITS = {
     "AGENTS.md": 5_000,
-    "CLAUDE.md": 600,
-    "GEMINI.md": 600,
-    ".cursor/rules/handoff-maintenance.mdc": 600,
-    ".github/copilot-instructions.md": 600,
+    # Original five.
+    "CLAUDE.md": SHIM_LIMIT,
+    "GEMINI.md": SHIM_LIMIT,
+    ".cursor/rules/handoff-maintenance.mdc": SHIM_LIMIT,
+    ".github/copilot-instructions.md": SHIM_LIMIT,
+    # Paths verified against the dotagent format registry.
+    ".clinerules": SHIM_LIMIT,
+    ".windsurfrules": SHIM_LIMIT,
+    ".rules": SHIM_LIMIT,
+    "CONVENTIONS.md": SHIM_LIMIT,
+    ".junie/guidelines.md": SHIM_LIMIT,
+    ".amazonq/rules/agents.md": SHIM_LIMIT,
+    ".roo/rules/agents.md": SHIM_LIMIT,
+    "best_practices.md": SHIM_LIMIT,
+    # Plausible but unverified. A wrong guess costs one unread file; a miss
+    # means the tool silently applies no rules at all.
+    "QWEN.md": SHIM_LIMIT,
+    "AGENT.md": SHIM_LIMIT,
+    ".trae/rules/project_rules.md": SHIM_LIMIT,
+    ".idx/airules.md": SHIM_LIMIT,
+    ".kilocode/rules/agents.md": SHIM_LIMIT,
 }
 POLICY_FILES = {
     "MASTER_HANDOFF.md",
     "REPOSITORY.md",
     "MULTI_AGENT.md",
+    "MODEL_ROUTING.md",
+    "GIT_WORKFLOW.md",
+    "PLATFORM_COMPATIBILITY.md",
     "README.md",
 }
 # Link text is presentational; only the branch name and the two targets are
@@ -173,11 +198,13 @@ def validate_active_pairs(
     entries: dict[str, tuple[Path, Path]],
     errors: list[str],
     verbose: bool,
+    require_current_handoff: bool = False,
 ) -> None:
-    """Require handoffs for indexed branches and the current checkout only.
+    """Require indexed pairs, plus the current branch when explicitly requested.
 
-    Other local branches may live in sibling worktrees; their handoff files are
-    not required to exist in this working tree until those branches merge.
+    Routine branches intentionally have no records. Durable/concurrent work uses
+    ``--require-current-handoff``. Other local branches may live in sibling
+    worktrees and are not required in this checkout until their records merge.
     """
     inside = run_git(root, "rev-parse", "--is-inside-work-tree")
     toplevel = run_git(root, "rev-parse", "--show-toplevel")
@@ -197,7 +224,7 @@ def validate_active_pairs(
         local_branches = set(branches.stdout.splitlines()) if branches.returncode == 0 else set()
 
     required = set(entries)
-    if current_branch:
+    if current_branch and require_current_handoff:
         required.add(current_branch)
 
     for branch in sorted(required):
@@ -444,6 +471,11 @@ def main() -> int:
         help="also reject unfilled template placeholders (use in repositories that "
         "have installed the kit, not in the kit's own repository)",
     )
+    parser.add_argument(
+        "--require-current-handoff",
+        action="store_true",
+        help="require the checked-out durable/concurrent branch in the active index",
+    )
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]
@@ -461,6 +493,9 @@ def main() -> int:
         handoffs / "MASTER_HANDOFF.md",
         handoffs / "REPOSITORY.md",
         handoffs / "MULTI_AGENT.md",
+        handoffs / "MODEL_ROUTING.md",
+        handoffs / "GIT_WORKFLOW.md",
+        handoffs / "PLATFORM_COMPATIBILITY.md",
         handoffs / "README.md",
         handoffs / "HISTORY.md",
         handoffs / "templates" / "BRANCH_HANDOFF.md",
@@ -476,7 +511,14 @@ def main() -> int:
     validate_sizes(handoffs, markdown_files, errors)
     validate_links(markdown_files + [root / "AGENTS.md"], errors)
     entries = parse_index(handoffs, errors)
-    validate_active_pairs(root, handoffs, entries, errors, args.verbose)
+    validate_active_pairs(
+        root,
+        handoffs,
+        entries,
+        errors,
+        args.verbose,
+        args.require_current_handoff,
+    )
     validate_archive_pairs(root, handoffs, errors)
     if args.installed:
         validate_no_placeholders(root, handoffs, markdown_files, errors)

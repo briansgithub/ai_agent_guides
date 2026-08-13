@@ -18,6 +18,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
@@ -207,6 +208,16 @@ class SizeRoutingTests(unittest.TestCase):
             self.limit("MASTER_HANDOFF.md"), validate_handoffs.POLICY_MAX_CHARACTERS
         )
         self.assertEqual(
+            self.limit("MODEL_ROUTING.md"), validate_handoffs.POLICY_MAX_CHARACTERS
+        )
+        self.assertEqual(
+            self.limit("GIT_WORKFLOW.md"), validate_handoffs.POLICY_MAX_CHARACTERS
+        )
+        self.assertEqual(
+            self.limit("PLATFORM_COMPATIBILITY.md"),
+            validate_handoffs.POLICY_MAX_CHARACTERS,
+        )
+        self.assertEqual(
             self.limit("templates/BRANCH_HANDOFF.md"),
             validate_handoffs.POLICY_MAX_CHARACTERS,
         )
@@ -220,6 +231,179 @@ class SizeRoutingTests(unittest.TestCase):
             if shim == "AGENTS.md":
                 continue
             self.assertEqual(limit, 600, f"{shim} must match the documented shim budget")
+
+
+class ShimConsistencyTests(unittest.TestCase):
+    """Every per-tool entry point must redirect, never restate.
+
+    Tool-specific files take precedence over AGENTS.md in clients that read
+    both. A shim that carried its own copy of the rules would therefore win
+    over the authoritative file and silently go stale.
+    """
+
+    def shims(self) -> list[tuple[str, int]]:
+        return [
+            (relative, limit)
+            for relative, limit in validate_handoffs.ENTRYPOINT_LIMITS.items()
+            if relative != "AGENTS.md"
+        ]
+
+    def present_shims(self) -> list[tuple[Path, int]]:
+        found = [(ROOT / rel, limit) for rel, limit in self.shims() if (ROOT / rel).is_file()]
+        self.assertTrue(found, "no shims found on disk; ROOT resolution is wrong")
+        return found
+
+    def test_every_shim_points_at_agents_md(self) -> None:
+        for path, _limit in self.present_shims():
+            text = path.read_text(encoding="utf-8")
+            self.assertIn(
+                "AGENTS.md", text, f"{path.name} does not redirect to AGENTS.md"
+            )
+
+    def test_no_shim_restates_the_rules(self) -> None:
+        for path, limit in self.present_shims():
+            text = path.read_text(encoding="utf-8")
+            self.assertLess(len(text), limit, f"{path} exceeds its {limit}-character budget")
+            body = [line for line in text.splitlines() if line.strip()]
+            self.assertLessEqual(
+                len(body), 6, f"{path} looks like a ruleset, not a pointer"
+            )
+
+    def test_shim_budgets_are_uniform(self) -> None:
+        for relative, limit in self.shims():
+            self.assertEqual(
+                limit,
+                validate_handoffs.SHIM_LIMIT,
+                f"{relative} deviates from the shared shim budget",
+            )
+
+    def test_readme_documents_every_registered_shim(self) -> None:
+        """A shim nobody can find is a shim nobody maintains."""
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        # assertTrue, not assertIn: a miss on an 8 KB haystack would dump the
+        # whole README into the failure output.
+        missing = [rel for rel, _ in self.shims() if rel not in readme]
+        self.assertFalse(
+            missing, f"registered but absent from README.md: {', '.join(missing)}"
+        )
+
+    def test_platform_matrix_covers_every_registered_entrypoint(self) -> None:
+        matrix = (
+            ROOT / "docs" / "handoffs" / "PLATFORM_COMPATIBILITY.md"
+        ).read_text(encoding="utf-8")
+        missing = [
+            rel for rel in validate_handoffs.ENTRYPOINT_LIMITS if rel not in matrix
+        ]
+        self.assertFalse(
+            missing, f"registered but absent from platform matrix: {', '.join(missing)}"
+        )
+
+    def test_agents_md_is_the_only_authoritative_file(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertGreater(
+            len(agents),
+            validate_handoffs.SHIM_LIMIT,
+            "AGENTS.md is shim-sized; the rules may have been moved out of it",
+        )
+
+    def test_agents_md_routes_formal_plans_to_model_policy(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("MODEL_ROUTING.md", agents)
+        self.assertIn("runtime model", agents)
+
+    def test_agents_md_routes_git_work_to_commit_policy(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("GIT_WORKFLOW.md", agents)
+        self.assertIn("autonomously commit", agents)
+        self.assertIn("explicit authorization", agents)
+
+    def test_git_policy_preserves_commit_and_destructive_boundaries(self) -> None:
+        policy = (ROOT / "docs" / "handoffs" / "GIT_WORKFLOW.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("standing-authorized", policy)
+        for operation in ("git clean", "git branch -d/-D", "commit --amend", "rebase"):
+            self.assertIn(operation, policy)
+        self.assertIn("explicit authorization", policy)
+
+    def test_git_policy_requires_confirmed_cleanup_and_retains_regressions(self) -> None:
+        policy = (ROOT / "docs" / "handoffs" / "GIT_WORKFLOW.md").read_text(
+            encoding="utf-8"
+        )
+        for phrase in (
+            "authorizes a bounded inventory and recommendation, not deletion",
+            "ask for confirmation",
+            "Keep tests, fixtures, snapshots, scripts, and baselines",
+            "backward compatibility",
+            "original purpose",
+            "durable note",
+        ):
+            self.assertIn(phrase, policy)
+
+    def test_repository_policy_supports_exact_standing_grants(self) -> None:
+        policy = (ROOT / "docs" / "handoffs" / "REPOSITORY.md").read_text(
+            encoding="utf-8"
+        )
+        for phrase in (
+            "Standing permission profile",
+            "Missing, example, expired, or ambiguous entries mean **ask**",
+            "push-task-branch",
+            "cleanup-untracked",
+            "force pushes",
+        ):
+            self.assertIn(phrase, policy)
+
+
+class CoordinationTierTests(TempDirCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.handoffs = self.tmp / "docs" / "handoffs"
+        self.handoffs.mkdir(parents=True)
+        main = self.handoffs / "main.md"
+        history = self.handoffs / "main.history.md"
+        main.write_text("main", encoding="utf-8")
+        history.write_text("history", encoding="utf-8")
+        self.entries = {"main": (main, history)}
+
+    def git_result(self, args: tuple[str, ...]) -> subprocess.CompletedProcess[str]:
+        outputs = {
+            ("rev-parse", "--is-inside-work-tree"): "true\n",
+            ("rev-parse", "--show-toplevel"): f"{self.tmp}\n",
+            ("branch", "--show-current"): "fix/routine-copy\n",
+            ("for-each-ref", "--format=%(refname:short)", "refs/heads"): (
+                "main\nfix/routine-copy\n"
+            ),
+        }
+        return subprocess.CompletedProcess(
+            ["git", *args], 0, stdout=outputs.get(args, ""), stderr=""
+        )
+
+    def validate(self, require_current: bool) -> list[str]:
+        errors: list[str] = []
+        with mock.patch.object(
+            validate_handoffs,
+            "run_git",
+            side_effect=lambda _root, *args: self.git_result(args),
+        ):
+            validate_handoffs.validate_active_pairs(
+                self.tmp,
+                self.handoffs,
+                self.entries,
+                errors,
+                verbose=False,
+                require_current_handoff=require_current,
+            )
+        return errors
+
+    def test_routine_branch_does_not_require_handoff(self) -> None:
+        self.assertEqual(self.validate(require_current=False), [])
+
+    def test_durable_flag_requires_current_branch_handoff(self) -> None:
+        errors = self.validate(require_current=True)
+        self.assertTrue(any("missing active handoff" in error for error in errors))
+        self.assertTrue(
+            any("missing from docs/handoffs/README.md" in error for error in errors)
+        )
 
 
 class IndexRowTests(unittest.TestCase):

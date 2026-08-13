@@ -10,15 +10,37 @@ Customize this file during installation. It defines standing repository choices 
 - Worktree layout: sibling of the primary checkout, named `../<repo>-wt-<slug>` (or the configured sibling root); never nested in the repository or another worktree
 - Worktree commits are ordinary branch history. `push` publishes the feature branch; an authorized merge/PR from the primary checkout is required to land it on the default branch.
 - Merge strategy: merge commit (`--no-ff`) by default; change deliberately if needed
-- Close sequence: verify reachability from the remote default branch, archive handoff/history, remove the sibling worktree, then `git branch -d`; delete the remote branch only after authorization
+- Close sequence: verify reachability and archive/commit handoff history; obtain explicit authorization before removing a worktree or deleting any local/remote branch
 - Direct feature commits to default branch: prohibited
-- Agent permissions: require explicit owner authorization for commit, push, PR, merge, stash deletion, and branch deletion unless a documented standing instruction applies
+- Agent permissions: normal task-branch commits and branch creation are autonomous; every other mutation requires current owner authorization or an exact standing grant below
+- Git best practices: always follow [GIT_WORKFLOW.md](GIT_WORKFLOW.md) unless the user or a narrower repository rule says otherwise
+
+### Standing permission profile
+
+Standing grants prevent repeated approval prompts for well-bounded actions. They are authorization, not suggestions: add one only with owner approval. An agent may use a grant only when its action, resolved targets, branch/remote, conditions, and validation all match exactly. Missing, example, expired, or ambiguous entries mean **ask**. A current owner instruction can narrow or revoke any grant.
+
+Defaults already granted by this kit: create a narrow task branch; make coherent in-scope commits on it. No additional repository grants are configured.
+
+| Action | Exact scope | Conditions and required validation | Owner/date |
+|---|---|---|---|
+
+<!-- Examples only; copying an example does not grant permission.
+| `push-task-branch` | `origin`, `feature/*` and `fix/*` only | no force; relevant checks pass; report remote ref | Owner, YYYY-MM-DD |
+| `create-pr` | current task branch -> `main` | ready summary and configured PR checks | Owner, YYYY-MM-DD |
+| `cleanup-untracked` | `.tmp/**`, `build/diagnostics/**` | inventory; generated-only; no references; durable deletion note | Owner, YYYY-MM-DD |
+| `cleanup-tracked` | `debug-artifacts/**` | exact inventory; regression assets excluded; focused test | Owner, YYYY-MM-DD |
+| `run-expensive-check` | `<exact command/profile>` | `<cost/time/trigger limits>` | Owner, YYYY-MM-DD |
+-->
+
+Do not use standing grants for force pushes, history rewriting, discarding unknown work, deleting unique/unmerged work, secrets, production data, or unbounded path patterns. Those always require fresh authorization. Record grant changes as durable owner decisions.
 
 ## Execution defaults
 
 - Formal implementation plan: not required for routine, localized, or clearly specified work, including ordinary IDE prompts
 - Use a plan when requested or when work is ambiguous, high-risk, multi-phase, dependency-ordered, cross-system, or likely to span sessions
 - Reuse an existing plan; update it only when the approach materially changes
+- Coordination tier: **routine** localized/single-session work uses Git only; **durable** material, risky, decision-heavy, or multi-session work uses a branch handoff/history; **concurrent** work also uses one sibling worktree per agent
+- Routine branches are intentionally absent from the handoff index. Durable and concurrent branches must be indexed and validated with `--require-current-handoff`
 - Context strategy: inspect relevant files first and expand only when evidence or risk requires it
 - Context preflight: batch-scan generated or unfamiliar artifacts (logs, build output, data dumps, vendored trees) with `python scripts/context_probe.py scan <paths>` before emitting contents; ordinary source and documentation do not need a preflight
 - Append-only records: search first when possible; otherwise retrieve recent log/history chunks and page backward only as needed
@@ -30,6 +52,7 @@ Customize this file during installation. It defines standing repository choices 
 Agents may run the configured baseline without asking for approval before every PR. Customize commands during installation:
 
 - Handoff structure: `python scripts/validate_handoffs.py --installed`
+- Current durable/concurrent branch: add `--require-current-handoff`
 - Handoff tool tests: `python -m unittest discover -s scripts -p "test_*.py"` (only when `scripts/` changes)
 - Build: `<command or not configured>`
 - Unit tests: `<command or not configured>`
@@ -41,6 +64,15 @@ If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
 For ordinary changes, run only the checks relevant to the affected behavior. Use the full PR baseline for PR/release readiness or when risk triggers justify it. Ask the owner when checks are unusually expensive, require owner participation, are unavailable, or may be deferred. Record meaningful results and deferrals in the active handoff only when they matter to continuation or release readiness.
 
 Wrap noisy commands with `python scripts/compact_check.py --name <label> -- <command>` so full failure logs remain local and successful output can be suppressed with `--quiet`.
+
+## Model routing
+
+- Runtime identity source: host/system metadata; never infer missing fields
+- Named routes available to this repository: not configured by the portable kit
+- Default: use the capability classes and switch gate in [MODEL_ROUTING.md](MODEL_ROUTING.md)
+- Switch authority: developer/owner
+
+Installers may replace “not configured” with stable mappings for fast/light, balanced coding, frontier/high-risk, and specialist work. A standing map prevents repeated model research; keep time-sensitive pricing and availability out unless someone maintains it.
 
 ## Multi-agent isolation
 
@@ -54,7 +86,7 @@ When agents are actually working concurrently:
 
 ### Toolchain notes for this repository
 
-Customize during installation; delete if not applicable.
+Customize during installation; omit from a new install if not applicable.
 
 - IDE/project model: `<one project per worktree, or not applicable>`
 - Gitignored files to copy into each new worktree: `<e.g. local.properties, .env.local, or none>`
@@ -63,7 +95,7 @@ Customize during installation; delete if not applicable.
 
 Example — an Android app would record: open each worktree as its own Android Studio project rather than switching branches; copy `local.properties` (SDK path) from the primary clone; expect a slow first Gradle sync, with `~/.gradle` shared across projects.
 
-If a stash is unavoidable, use `wip <exact-branch-name>: <reason>`, note it in the owning handoff when recovery depends on it, and apply or drop it only on the named branch after verifying disposition.
+If a stash is unavoidable, use `wip <exact-branch-name>: <reason>`, note it in the owning handoff when recovery depends on it, and apply it only on the named branch after verifying disposition. Dropping or popping requires explicit deletion authorization.
 
 ## Handoff locations
 
@@ -73,3 +105,5 @@ If a stash is unavoidable, use `wip <exact-branch-name>: <reason>`, note it in t
 - Global close ledger: `docs/handoffs/HISTORY.md`
 - Templates: `docs/handoffs/templates/`
 - Parallel-agent procedure: `docs/handoffs/MULTI_AGENT.md`
+- Formal-plan model routing: `docs/handoffs/MODEL_ROUTING.md`
+- Git workflow and commit policy: `docs/handoffs/GIT_WORKFLOW.md`

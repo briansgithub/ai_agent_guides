@@ -21,11 +21,14 @@ One folder + one checkout forces branch switching, stashing, file overwrites, lo
 
 ## Standard workflow
 
-1. Update the default branch in the primary clone:
+1. Fetch and inspect the intended base in the primary clone:
    ```bash
    git checkout main
-   git pull origin main
+   git fetch origin
+   git status --short --branch
+   git log --oneline main..origin/main
    ```
+   Update `main` only when authorized by the current request or an exact standing grant in `REPOSITORY.md`; prefer an explicit fast-forward when appropriate instead of an implicit pull merge/rebase.
 2. Create one worktree per agent/task (new branch):
    ```bash
    git worktree add -b feature/<purpose> <path-to-new-folder> main
@@ -35,9 +38,9 @@ One folder + one checkout forces branch switching, stashing, file overwrites, lo
    git worktree add -b feature/foo ../repo-wt-foo main
    ```
 3. Open **that folder** as the agent’s workspace (not the primary clone unless this agent owns it).
-4. In that worktree: create the mirrored handoff + `.history.md`, implement, validate, commit on that branch only.
+4. In that worktree: create the mirrored handoff + `.history.md`, implement, validate with `--require-current-handoff`, and commit on that branch only.
 5. When finished: push/PR from that branch, then after merge follow the normal archive + branch-delete protocol.
-6. Remove the worktree when done:
+6. After explicit authorization, remove the worktree when done:
    ```bash
    git worktree remove <path-to-new-folder>
    ```
@@ -54,8 +57,8 @@ From the primary/default checkout, after an authorized merge or PR landing:
 
 1. Confirm the feature tip or merge commit is reachable from the remote default branch (`git merge-base --is-ancestor`).
 2. Archive the branch handoff/history and update the close ledger/index as required.
-3. Run `git worktree list`, then remove the sibling worktree and delete the local branch with `git branch -d`.
-4. Delete the remote branch only with owner authorization and after reachability is verified.
+3. Run `git worktree list`, then request explicit authorization before removing the sibling worktree or deleting its local branch.
+4. Delete the remote branch only with separate owner authorization and after reachability is verified.
 
 If the worktree is dirty or the feature is not merged into the default branch, stop and preserve it—even if its branch was pushed. Do not use `git worktree remove --force`, `git branch -D`, or delete a worktree owned by another agent without explicit authorization.
 
@@ -70,7 +73,7 @@ git worktree list
 - Handoffs remain in `docs/handoffs/` and are committed **on the branch that owns the work**.
 - Each agent updates only its own branch handoff/history in its worktree.
 - The active index (`README.md`) on a branch should list that branch (and `main` when present); do not expect every sibling worktree’s branch files to exist in every checkout until those branches merge.
-- `python scripts/validate_handoffs.py` must pass **in the worktree where the agent is working**. It requires:
+- `python scripts/validate_handoffs.py --require-current-handoff` must pass **in the worktree where the agent is working**. It requires:
   - every branch listed in that checkout’s active index;
   - the currently checked-out branch;
   - size limits, links, and archive pairs.
@@ -99,9 +102,9 @@ Toolchains that need gitignored machine-local files (SDK paths, credentials, edi
 ## Anti-loss (keep work findable)
 
 - Commit meaningful WIP on its branch before leaving a worktree idle (`WIP:` commits are fine).
-- After the first meaningful commit, push the living branch: `git push -u origin HEAD`.
+- After the first meaningful commit, push the living branch with authorization: `git push -u origin HEAD`.
 - Prefer commits in the branch worktree over long-lived stashes.
-- Before `git worktree remove` or `git branch -d`: confirm commits are pushed or merged; do not delete unpushed unique work.
+- Before requesting `git worktree remove` or `git branch -d`: confirm commits are pushed or merged; do not delete unpushed unique work. Both deletion actions require explicit authorization.
 - Discover other work with `git worktree list`, `git branch -vv`, `git stash list`, and `python scripts/validate_handoffs.py` — not a separate inventory doc.
 
 ## Stash ownership
@@ -109,9 +112,9 @@ Toolchains that need gitignored machine-local files (SDK paths, credentials, edi
 - Prefer **no stash** when using worktrees.
 - If a stash is unavoidable, message must be: `wip <exact-branch-name>: <short reason>`.
 - Record that exact message in the branch handoff Current status.
-- Pop/apply only when checked out on the named branch **and** the current handoff lists that stash.
+- Apply only when checked out on the named branch **and** the current handoff lists that stash. Because `pop` deletes on success, use it only with explicit deletion authorization; otherwise use `apply`.
 - Never pop/drop a stash named for another branch, or one not listed in the current handoff.
-- Drop only after the work is committed on the named branch or the owner abandons it.
+- Drop only with explicit authorization after the work is committed on the named branch or the owner abandons it.
 - Do not trust `stash@{N}` alone — indexes shift; ownership is **message branch name + handoff note**.
 
 ## Optional alternatives (usually secondary)
