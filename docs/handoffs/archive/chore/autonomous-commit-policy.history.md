@@ -11,3 +11,8 @@ Append-only milestones. Current state belongs in [autonomous-commit-policy.md](a
 - Commit/base: checkpoint on `chore/autonomous-commit-policy`, based on `76540cc`
 - Change: Added narrow branch, exact staging, automatic checkpoint commit, conflict/recovery, and explicit destructive-operation rules; reconciled worktree and stash cleanup guidance.
 - Validation/decision: Structural validation, 42 standard-library tests, and `git diff --check` passed. Push, PR, merge, release/tag creation, deletion, discard, and ancestry-changing commands remain authorization-gated.
+
+### 2026-08-13 — Merged into `main`
+- Commit/base: final tip `d680459`; merge `98a5dd4`
+- Change: Landed autonomous additive checkpoints and destructive-action boundaries in the coordinated ruleset stack.
+- Validation/decision: The complete 47-test tool suite passed on merged `main`; records archived without deleting the local branch.

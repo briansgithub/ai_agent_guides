@@ -5,15 +5,10 @@ Active branch inventory and merge order. Consult the linked handoff when resumin
 | Branch | Role | Handoff | History |
 |---|---|---|---|
 | `main` | Shared integration branch | [main.md](main.md) | [history](main.history.md) |
-| `chore/flatten-kit-to-root` | Restructure for agent discovery | [handoff](chore/flatten-kit-to-root.md) | [history](chore/flatten-kit-to-root.history.md) |
-| `chore/model-routing-policy` | Formal-plan model routing | [handoff](chore/model-routing-policy.md) | [history](chore/model-routing-policy.history.md) |
-| `chore/autonomous-commit-policy` | Autonomous commits and Git safety | [handoff](chore/autonomous-commit-policy.md) | [history](chore/autonomous-commit-policy.history.md) |
-| `chore/cleanup-artifact-policy` | Confirmed temporary-artifact cleanup | [handoff](chore/cleanup-artifact-policy.md) | [history](chore/cleanup-artifact-policy.history.md) |
-| `chore/streamline-agent-rules` | Tiered coordination and standing grants | [handoff](chore/streamline-agent-rules.md) | [history](chore/streamline-agent-rules.history.md) |
 
 ## Current merge order
 
-Merge in order: `chore/flatten-kit-to-root`, `chore/model-routing-policy`, `chore/autonomous-commit-policy`, `chore/cleanup-artifact-policy`, then `chore/streamline-agent-rules`. Each branch is based on its predecessor; archive each branch's records in its merge.
+No active dependent branches. Add durable/concurrent branches here in dependency order; routine branches remain unindexed.
 
 ## Row format
 

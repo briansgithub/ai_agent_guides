@@ -11,3 +11,8 @@ Append-only milestones. Current state belongs in [model-routing-policy.md](model
 - Commit/base: uncommitted working tree on `chore/model-routing-policy`
 - Change: Added runtime-safe identity reporting, least-cost capable phase routes, the material-benefit switch gate, discovery caveats, and validator/test coverage.
 - Validation/decision: Structural validation, 40 standard-library tests, and `git diff --check` passed. Avoid a literal “globally optimal” requirement because hosts may hide identity and alternatives; guessing would create unreliable recommendations and repeated pauses.
+
+### 2026-08-13 — Merged into `main`
+- Commit/base: final tip `76540cc`; merge `98a5dd4`
+- Change: Landed token-aware formal-plan routing in the coordinated ruleset stack.
+- Validation/decision: The complete 47-test tool suite passed on merged `main`; records archived without deleting the local branch.

@@ -11,3 +11,8 @@ Append-only milestones. Current state belongs in [streamline-agent-rules.md](str
 - Commit/base: checkpoint on `chore/streamline-agent-rules`, based on `578cc32`
 - Change: Completed tier-aware validation, standing grants, the smoke matrix, compact lifecycle routing, and the explicit base-update workflow.
 - Validation/decision: Strict structural validation, 47 standard-library tests, and whitespace checks passed. `MASTER_HANDOFF.md` decreased from 14,527 to 7,563 bytes.
+
+### 2026-08-13 — Merged into `main`
+- Commit/base: final tip `31cb5c8`; merge `98a5dd4`
+- Change: Landed coordination tiers, standing grants, platform smoke evidence, and compact lifecycle routing in `main`.
+- Validation/decision: The complete 47-test tool suite passed on merged `main`; records archived without deleting the local branch.
