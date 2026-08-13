@@ -5,3 +5,6 @@ __pycache__/
 
 # compact_check.py --artifact-dir target, when pointed inside the repository.
 .agent-artifacts/
+
+# Agent-local permission overrides; never shared and never installed.
+.claude/settings.local.json

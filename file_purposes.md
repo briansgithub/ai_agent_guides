@@ -1,83 +1,97 @@
 # File purposes
 
-What each file in this repository is for. This repository distributes reusable,
-vendor-neutral guidance kits; it does not itself install one.
+What each file in this repository is for.
 
-## Repository root
+**This repository *is* the kit.** These files are live here — the validator validates
+this repository and the tests run against it — and they are also what gets copied into
+an installing repository.
 
-| Path | Purpose |
-|---|---|
-| `README.md` | Index of the available kits and how to install one. |
-| `file_purposes.md` | This file. |
-| `.gitignore` | Keeps Python bytecode and check artifacts out of the tree. |
+The `Ships` column says what happens on install:
 
-## `git-handoff-system/` — the portable kit
+- **yes** — copy verbatim.
+- **seeded** — copy, then reset to the target's own content.
+- **no** — do not copy. Copying these produces an install that *passes validation
+  while carrying this repository's history as its own*, which nothing detects.
 
-Copy this directory's **contents** into a target repository root; see its
-[README](git-handoff-system/README.md) for the install sequence.
+## Agent entry points
 
-### Agent entry points
+`AGENTS.md` is authoritative; every other file here is a short pointer to it, never a
+copy of the rules. Tool-specific files take precedence over `AGENTS.md` in clients that
+read both, so a pointer redirects to the single source instead of letting a stale copy
+win. Each is capped at 600 characters, and a test asserts it points at `AGENTS.md`.
 
-| Path | Purpose |
-|---|---|
-| `AGENTS.md` | **Authoritative** agent defaults: work, context, verification, and handoff rules. The only always-loaded file and the only required entry point. Capped at 5,000 characters. |
-| `CLAUDE.md` | Shim pointing Claude at `AGENTS.md`. |
-| `GEMINI.md` | Shim pointing Gemini/Google agents at `AGENTS.md`. |
-| `.cursor/rules/handoff-maintenance.mdc` | Always-applied Cursor rule pointing at `AGENTS.md`. |
-| `.github/copilot-instructions.md` | Shim pointing Copilot at `AGENTS.md`. |
+| Path | Tool | Ships |
+|---|---|---|
+| `AGENTS.md` | **Authoritative** agent defaults. Codex, OpenCode, Zed, Cursor, VS Code chat. The only required entry point. | yes |
+| `CLAUDE.md` | Claude Code, VS Code chat | yes |
+| `GEMINI.md` | Gemini CLI, Antigravity, Gemini Code Assist, Android Studio | yes |
+| `.cursor/rules/handoff-maintenance.mdc` | Cursor | yes |
+| `.github/copilot-instructions.md` | GitHub Copilot | yes |
+| `.clinerules` | Cline | yes |
+| `.windsurfrules` | Windsurf | yes |
+| `.rules` | Zed | yes |
+| `CONVENTIONS.md` | Aider | yes |
+| `.junie/guidelines.md` | JetBrains Junie | yes |
+| `.amazonq/rules/agents.md` | Amazon Q Developer | yes |
+| `.roo/rules/agents.md` | Roo Code | yes |
+| `best_practices.md` | Qodo | yes |
+| `QWEN.md`, `AGENT.md`, `.trae/rules/project_rules.md`, `.idx/airules.md`, `.kilocode/rules/agents.md` | Qwen, Amp, Trae, Firebase Studio, Kilo | yes |
 
-Shims are optional and interchangeable — delete any you do not use, and add one
-for another tool the same way. Each is capped at 600 characters and must point
-at `AGENTS.md` rather than restate the protocol, so the rules have one source.
+Delete any shim the target does not use.
 
-### On-demand policy documents
+## On-demand policy documents
 
 Routed to from `AGENTS.md` only when relevant; never startup reading.
 
-| Path | Purpose |
-|---|---|
-| `docs/handoffs/MASTER_HANDOFF.md` | Lifecycle reference: startup, context budget, handoff contents, per-branch history, close/archive sequence, verification and PR readiness, stash recovery. |
-| `docs/handoffs/REPOSITORY.md` | Repository-specific configuration: default branch, merge strategy, agent permissions, standing check profile, toolchain notes. The file installers customize first. |
-| `docs/handoffs/MULTI_AGENT.md` | Git worktree isolation for genuinely concurrent agents. Toolchain-neutral. |
+| Path | Purpose | Ships |
+|---|---|---|
+| `docs/handoffs/MASTER_HANDOFF.md` | Lifecycle reference: startup, context budget, handoff contents, per-branch history, close and archive sequence, verification and PR readiness, stash recovery. | yes |
+| `docs/handoffs/REPOSITORY.md` | Repository-specific configuration: default branch, merge strategy, agent permissions, standing check profile, toolchain notes. The file installers customize first. | yes |
+| `docs/handoffs/MULTI_AGENT.md` | Git worktree isolation for genuinely concurrent agents. Toolchain-neutral. | yes |
 
-### Branch records
+## Branch records
 
-| Path | Purpose |
-|---|---|
-| `docs/handoffs/README.md` | Active branch index, merge order, and the index row format the validator expects. |
-| `docs/handoffs/main.md` | Replacement-style handoff for the default branch. Rename if the default branch is not `main`. |
-| `docs/handoffs/main.history.md` | Append-only milestones for the default branch. |
-| `docs/handoffs/HISTORY.md` | Global close ledger — one entry per closed branch. Rolls over into `HISTORY/<year>.md`. |
-| `docs/handoffs/archive/README.md` | How closed branch records are frozen and where they mirror to. |
+Active handoffs are replacement-style; histories are append-only and enforced as such
+against a base ref. Per-branch histories roll over into numbered segments
+(`<branch>.history.2.md`); the global ledger rolls into `HISTORY/<year>.md`.
 
-Active handoffs are replacement-style; histories are append-only and enforced as
-such against a base ref. Per-branch histories roll over into numbered segments
-(`<branch>.history.2.md`).
+| Path | Purpose | Ships |
+|---|---|---|
+| `docs/handoffs/README.md` | Active branch index, merge order, and the row format the validator expects. | seeded — reduce to the target's default-branch row |
+| `docs/handoffs/main.md` | Replacement-style handoff for the default branch. Left unfilled here on purpose: it doubles as the skeleton an installer renames and fills. | yes — rename to the target's default branch |
+| `docs/handoffs/main.history.md` | Append-only milestones for the default branch. Same skeleton role. | yes — rename to match |
+| `docs/handoffs/HISTORY.md` | Global close ledger, one entry per closed branch. | seeded — keep the format, empty the entries |
+| `docs/handoffs/archive/README.md` | How closed branch records are frozen and where they mirror to. | yes |
+| `docs/handoffs/archive/**` (records) | Frozen records for this repository's closed branches. | **no** |
+| `docs/handoffs/<branch>/**` | This repository's live branch records, e.g. `chore/`. | **no** |
 
-### Templates
+## Templates
 
-| Path | Purpose |
-|---|---|
-| `docs/handoffs/templates/BRANCH_HANDOFF.md` | Starter for a new active branch handoff. Carries a filled worked example. |
-| `docs/handoffs/templates/BRANCH_HISTORY.md` | Starter for an append-only branch history. Carries worked examples of entries that are and are not worth appending. |
-| `docs/handoffs/templates/ARCHIVED_HANDOFF.md` | Frozen post-merge form. |
+| Path | Purpose | Ships |
+|---|---|---|
+| `docs/handoffs/templates/BRANCH_HANDOFF.md` | Starter for a new active branch handoff. Carries a filled worked example. | yes |
+| `docs/handoffs/templates/BRANCH_HISTORY.md` | Starter for an append-only branch history. Carries worked examples of entries that are and are not worth appending. | yes |
+| `docs/handoffs/templates/ARCHIVED_HANDOFF.md` | Frozen post-merge form. | yes |
 
-### Tooling
-
-| Path | Purpose |
-|---|---|
-| `scripts/validate_handoffs.py` | Structural validator: required files, size budgets, links, active/archive pairs, append-only histories. `--installed` also rejects unfilled template placeholders. |
-| `scripts/context_probe.py` | Local size and token-risk preflight for generated or unfamiliar artifacts, plus bounded recency-first retrieval (`tail`, `chunk`). Estimates are calibrated against measured tokenizer output. |
-| `scripts/compact_check.py` | Runs one check while keeping full logs off the AI context path: bounded failure tail to the agent, complete log on disk. `--shell` for pipelines and wrapper scripts. |
-| `scripts/test_agent_tools.py` | Standard-library tests for all three tools, including a regression case per fixed defect. |
+## Tooling
 
 If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
 
-### Distribution and CI
+| Path | Purpose | Ships |
+|---|---|---|
+| `scripts/validate_handoffs.py` | Structural validator: required files, size budgets, links, active and archive pairs, append-only histories. `--installed` also rejects unfilled template placeholders. | yes |
+| `scripts/context_probe.py` | Size and token-risk preflight for generated or unfamiliar artifacts, plus bounded recency-first retrieval (`tail`, `chunk`). Estimates calibrated against measured tokenizer output. | yes |
+| `scripts/compact_check.py` | Runs one check while keeping full logs off the AI context path: bounded failure tail to the agent, complete log on disk. `--shell` for pipelines and wrapper scripts. | yes |
+| `scripts/test_agent_tools.py` | Standard-library tests for all three tools, with a regression case per fixed defect. | yes |
 
-| Path | Purpose |
-|---|---|
-| `VERSION` | Installed kit version. Record it in the target repository's handoff history so an upgrade knows what it replaces. |
-| `CHANGELOG.md` | What changed between versions and what an upgrade must reconcile. |
-| `.gitignore` | Merged into the target repository so tool bytecode is not committed. |
-| `.github/workflows/handoff-validation.yml` | Runs the tool tests and the structural validator on Linux and Windows for pull requests and pushes to `main`. |
+## Distribution and repository metadata
+
+| Path | Purpose | Ships |
+|---|---|---|
+| `README.md` | What this repository is, the agent entry-point matrix, install instructions, tool usage. | yes |
+| `VERSION` | Installed kit version. Record it in the target's handoff history so an upgrade knows what it replaces. | yes |
+| `CHANGELOG.md` | What changed between versions and what an upgrade must reconcile. | yes |
+| `.gitignore` | Keeps tool bytecode and agent-local settings out of the tree. Merge into any existing one. | yes |
+| `.github/workflows/handoff-validation.yml` | Runs the tool tests and the structural validator on Linux and Windows. | yes |
+| `file_purposes.md` | This file — documentation about this repository. | **no** |
+| `.claude/settings.local.json` | Agent-local permission overrides. Untracked and gitignored. | **no** |

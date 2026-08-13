@@ -5,6 +5,59 @@ installed copy cannot be upgraded by a package manager. Record the installed
 version in that repository's handoff history, and consult this file when
 upgrading.
 
+## 2.1.0
+
+Flattens the kit to the repository root so agent rules are discoverable without
+per-tool configuration. **The install procedure changed** — see below.
+
+### Fixed
+
+- **No agent-instruction file was discoverable.** `AGENTS.md`, `CLAUDE.md`,
+  `GEMINI.md`, `.cursor/`, and `.github/` all sat one directory below the
+  repository root, where no tool looks. They are now at the root.
+- **CI had never run.** GitHub only executes `<repo-root>/.github/workflows/`;
+  the workflow was one level down and therefore inert.
+- **`validate_append_only` had never run.** It builds paths with
+  `relative_to(root)`; with `root` as the nested kit directory those paths did
+  not exist in the repository, so `git show` failed and every history file was
+  silently skipped. Append-only enforcement is live for the first time.
+- **The validator did not know it was in a repository.** `git rev-parse
+  --show-toplevel` did not match its computed root, so `in_repo` was false and
+  the checked-out branch was never required to have a handoff record. The
+  repository now validates itself.
+
+### Changed
+
+- **Install is no longer "copy this directory's contents."** That instruction is
+  now actively destructive: it would drag `.git/`, `file_purposes.md`, and this
+  repository's own branch records into the target, producing an install that
+  *passes validation while carrying this repository's history as its own*.
+  `README.md` now leads with an explicit exclusion list, and `file_purposes.md`
+  carries a `Ships` column (`yes` / `no` / `seeded`) for every file.
+- **`AGENTS.md` works when read from another repository.** Rules that depend on
+  kit files are marked *if present* so the principle survives where the mechanism
+  does not; universal rules stay unconditional. Added a precedence rule: where an
+  ancestor-directory or global instruction file conflicts, follow the narrower
+  repository-scoped rule and name the instruction set aside rather than silently
+  choosing.
+- **Default branch renamed `master` → `main`**, matching the kit's own docs,
+  templates, and CI trigger.
+- This repository now keeps live branch records under `docs/handoffs/`, so the
+  end-to-end test is coupled to repository state: a new branch needs its records
+  before the suite passes. That is the kit applying to itself.
+
+### Added
+
+- Per-tool shims for every known convention beyond the original five: Cline,
+  Windsurf, Zed, Aider, JetBrains Junie, Amazon Q, Roo Code, Qodo, and several
+  plausible-but-unverified ones. A wrong guess costs one unread 185-byte file; a
+  miss means a tool silently applies no rules. Each is a pointer to `AGENTS.md`,
+  never a copy — tool-specific files take precedence over `AGENTS.md` in clients
+  that read both, so a pointer redirects to the single source.
+- A test asserting every shim present points at `AGENTS.md` and stays under budget.
+- `.claude/settings.local.json` added to `.gitignore`; it was excluded only by a
+  user-level global ignore and would otherwise become tracked for a second contributor.
+
 ## 2.0.0
 
 Corrects defects that made documented workflows fail validation, recalibrates

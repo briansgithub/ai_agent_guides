@@ -5,10 +5,11 @@ Active branch inventory and merge order. Consult the linked handoff when resumin
 | Branch | Role | Handoff | History |
 |---|---|---|---|
 | `main` | Shared integration branch | [main.md](main.md) | [history](main.history.md) |
+| `chore/flatten-kit-to-root` | Restructure for agent discovery | [handoff](chore/flatten-kit-to-root.md) | [history](chore/flatten-kit-to-root.history.md) |
 
 ## Current merge order
 
-`<Describe current dependencies or state that no feature branches are open.>`
+`chore/flatten-kit-to-root` merges to `main`; nothing depends on it. Archive its records in the same merge.
 
 ## Row format
 

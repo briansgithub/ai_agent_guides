@@ -4,51 +4,63 @@ Reusable branch-handoff framework for any agent that honors `AGENTS.md`, with sh
 
 Version: see [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md). Record the installed version in the repository's handoff history so an upgrade can tell what it is replacing.
 
+## What this repository is
+
+**This repository *is* the kit, and it installs itself.** `AGENTS.md`, `docs/handoffs/`, `scripts/`, and `.github/workflows/` here are live, not samples — the validator validates *this* repository and the tests run against it.
+
+Agents and IDEs pointed at this directory need no configuration: `AGENTS.md` is authoritative, and every per-tool file at the root is a short pointer to it.
+
+To use it elsewhere, see [Install in another repository](#install-in-another-repository).
+
+## Agent entry points
+
+`AGENTS.md` is the single source of the defaults. Everything else is a pointer to it, because tool-specific files take precedence over `AGENTS.md` in clients that read both — a pointer redirects to the one source instead of letting a stale copy win. The validator caps `AGENTS.md` at 5,000 characters and every shim at 600, and a test asserts each shim actually points at `AGENTS.md`.
+
+| Path | Tool |
+|---|---|
+| `AGENTS.md` | **authoritative** — Codex, OpenCode, Zed, Cursor, VS Code chat |
+| `CLAUDE.md` | Claude Code, VS Code chat |
+| `GEMINI.md` | Gemini CLI, Antigravity, Gemini Code Assist, Android Studio |
+| `.cursor/rules/handoff-maintenance.mdc` | Cursor |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+| `.clinerules` | Cline |
+| `.windsurfrules` | Windsurf |
+| `.rules` | Zed |
+| `CONVENTIONS.md` | Aider |
+| `.junie/guidelines.md` | JetBrains Junie |
+| `.amazonq/rules/agents.md` | Amazon Q Developer |
+| `.roo/rules/agents.md` | Roo Code |
+| `best_practices.md` | Qodo |
+| `QWEN.md`, `AGENT.md`, `.trae/rules/project_rules.md`, `.idx/airules.md`, `.kilocode/rules/agents.md` | Qwen, Amp, Trae, Firebase Studio, Kilo |
+
+Delete any you do not use — only `AGENTS.md` is required. Adding support for another tool is one short file pointing at `AGENTS.md`, plus its path in `ENTRYPOINT_LIMITS`.
+
 ## Install in another repository
 
-1. Copy this directory’s **contents** into the repository root, preserving hidden directories. Merge `.gitignore` into any existing one.
-2. **If the default branch is not `main`,** rename `docs/handoffs/main.md` and `main.history.md` to match it and update the index row in `docs/handoffs/README.md`. Skipping this fails validation immediately: the checked-out branch must appear in the index.
-3. Edit `docs/handoffs/REPOSITORY.md` for that repository — default branch, check profile, permissions, toolchain notes.
-4. Fill in `docs/handoffs/<default-branch>.md` and record the installation milestone in the adjacent history. Both ship with placeholders that `--installed` will reject until replaced.
-5. Update the active branch roles and merge order in `docs/handoffs/README.md`.
-6. Delete any per-tool shim you do not use. Only `AGENTS.md` is required.
-7. Run `python scripts/validate_handoffs.py --installed`.
-8. Commit the complete setup.
-
-If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
-
-## Portable files
+Copy everything **except**:
 
 ```text
-AGENTS.md                    authoritative agent defaults; the only required entry point
-CLAUDE.md                    per-tool shims, each pointing at AGENTS.md; delete unused ones
-GEMINI.md
-.cursor/rules/handoff-maintenance.mdc
-.github/copilot-instructions.md
-.github/workflows/handoff-validation.yml
-.gitignore
-VERSION
-CHANGELOG.md
-docs/handoffs/
-  MASTER_HANDOFF.md          lifecycle and recovery reference
-  REPOSITORY.md              repository-specific policy and check profile
-  MULTI_AGENT.md             concurrent-agent worktree isolation
-  README.md                  active branch index
-  HISTORY.md                 global close ledger
-  main.md                    rename to the default branch if it is not `main`
-  main.history.md
-  archive/README.md
-  templates/
-    BRANCH_HANDOFF.md
-    BRANCH_HISTORY.md
-    ARCHIVED_HANDOFF.md
-scripts/validate_handoffs.py
-scripts/context_probe.py
-scripts/compact_check.py
-scripts/test_agent_tools.py  standard-library tests for all three tools
+.git/                          this repository's own history
+.claude/                       agent-local permission overrides
+file_purposes.md               documentation about this repository
+docs/handoffs/<branch>/**      this repository's live branch records
+docs/handoffs/archive/**       except archive/README.md
 ```
 
-`AGENTS.md` is the lean, vendor-neutral entry point and the single source of the defaults. The shims exist only so each tool loads something it recognises; every one of them just points back at `AGENTS.md`. Add a shim for any other tool the same way — one short file, no duplicated protocol. The validator caps `AGENTS.md` at 5,000 characters and each shim at 600.
+Then, in the target:
+
+1. Rename `docs/handoffs/main.md` and `main.history.md` to the target's default branch, and update the index row in `docs/handoffs/README.md` to match. Skipping this fails validation immediately: the checked-out branch must appear in the index.
+2. Reduce the index in `docs/handoffs/README.md` to that one row, and empty the entries under `docs/handoffs/HISTORY.md`.
+3. Edit `docs/handoffs/REPOSITORY.md` — default branch, check profile, permissions, toolchain notes.
+4. Delete any per-tool shim the target does not use.
+5. Run `python scripts/validate_handoffs.py --installed`. It will report the placeholders in the renamed default-branch records; filling them is step 6.
+6. Fill those fields and commit the complete setup.
+
+Copying the excluded paths produces an install that **passes validation while carrying this repository's branch history as its own** — the copied index and copied records are internally consistent, so nothing detects it. That is why the exclusion list matters more than the copy step.
+
+`file_purposes.md` carries a `Ships` column marking every file `yes`, `no`, or `seeded`.
+
+If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
 
 The default workflow avoids formal plans for straightforward changes, loads handoff/history documents only when relevant, and uses risk-proportional verification. Repository-wide analysis or unusually expensive validation should be confirmed with the owner when it materially expands an otherwise bounded request.
 
@@ -91,6 +103,8 @@ python -m unittest discover -s scripts -p "test_*.py"
 ```
 
 Standard library only — an installing repository does not inherit a test dependency. CI runs these plus the structural validator on Linux and Windows.
+
+The end-to-end test validates *this* repository, so a new branch needs its handoff records before the suite passes — even a branch opened for a one-line fix. That is the kit applying to itself; create the two records from `docs/handoffs/templates/` as `MASTER_HANDOFF.md`'s New branches procedure already requires.
 
 For agents that are actually working concurrently, follow `docs/handoffs/MULTI_AGENT.md`: one Git worktree (folder + branch) per agent. Record any toolchain-specific worktree steps — files to copy, one-project-per-worktree IDEs — in `docs/handoffs/REPOSITORY.md`.
 
