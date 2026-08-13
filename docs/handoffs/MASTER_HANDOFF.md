@@ -34,7 +34,7 @@ Routine questions, localized edits, and read-only work do not require the full p
 - `REPOSITORY.md`: repository-specific workflow, permissions, and check profiles
 - `MULTI_AGENT.md`: concurrent-agent isolation with Git worktrees
 - `MODEL_ROUTING.md`: model selection and switch gate used only for formal plans
-- `GIT_WORKFLOW.md`: branching, staging, autonomous commits, and destructive-action gates
+- `GIT_WORKFLOW.md`: branching, staging, autonomous commits, confirmed temporary-artifact cleanup, and destructive-action gates
 - `templates/`: starter branch/archive files
 
 Paths mirror branch names, for example `feature/example.md` and `feature/example.history.md`.

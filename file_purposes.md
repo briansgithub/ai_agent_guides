@@ -49,7 +49,7 @@ Routed to from `AGENTS.md` only when relevant; never startup reading.
 | `docs/handoffs/REPOSITORY.md` | Repository-specific configuration: default branch, merge strategy, agent permissions, standing check profile, toolchain notes. The file installers customize first. | yes |
 | `docs/handoffs/MULTI_AGENT.md` | Git worktree isolation for genuinely concurrent agents. Toolchain-neutral. | yes |
 | `docs/handoffs/MODEL_ROUTING.md` | Formal-plan model routing: runtime identity, capability classes, total-token optimization, and the developer switch gate. | yes |
-| `docs/handoffs/GIT_WORKFLOW.md` | Default Git practices: narrow branches, exact staging, autonomous checkpoint commits, and authorization gates for destructive or ancestry-changing operations. | yes |
+| `docs/handoffs/GIT_WORKFLOW.md` | Default Git practices: narrow branches, exact staging, autonomous checkpoint commits, confirmed temporary-artifact cleanup, regression-test retention, and destructive-action gates. | yes |
 
 ## Branch records
 

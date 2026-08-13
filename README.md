@@ -70,6 +70,8 @@ Formal plans use [MODEL_ROUTING.md](docs/handoffs/MODEL_ROUTING.md): the agent r
 
 Git work follows [GIT_WORKFLOW.md](docs/handoffs/GIT_WORKFLOW.md). Agents create narrow task branches and automatically commit coherent, validated checkpoints containing only their in-scope files. Normal commits and branch creation are standing-authorized; deletion, discarded work, history/ancestry changes, pushes, PRs, and merges require explicit authorization unless a narrower repository policy grants it.
 
+“Clean up” starts a candidate inventory. The agent identifies disposable debug/research/testing artifacts, explains their purpose, and requests confirmation for exact targets. Regression and backward-compatibility coverage is retained. Confirmed deletions receive a durable purpose/disposition note and a focused cleanup commit.
+
 ## Context and output controls
 
 Size-probe candidate context locally without emitting file contents:

@@ -50,3 +50,28 @@ A normal new commit is the explicit exception: it appends history and is autonom
 2. Prefer additional corrective commits over rewriting published history.
 3. Before any authorized cleanup, verify the feature tip is reachable from the intended default branch and that no dirty or unique work remains.
 4. Keep a pushed-but-unmerged branch. Deletion is a separate authorized action, never an automatic consequence of completion or push.
+
+## 7. Clean temporary artifacts with confirmation
+
+A request such as “clean up” authorizes a bounded inventory and recommendation, not deletion. Find candidates locally, group them by purpose, and ask for confirmation before deleting anything.
+
+Classify a file as disposable only when both are highly likely:
+
+- It is temporary debug, scratch, research, experiment, generated diagnostic, or one-off testing material that is not part of the final deliverable.
+- It will not provide future implementation, operational, audit, reproduction, or maintenance value.
+
+Do **not** classify regression assets as temporary merely because they were created while debugging. Keep tests, fixtures, snapshots, scripts, and baselines that verify a fixed bug, confirm previously implemented behavior, prevent recurrence, or improve backward compatibility. If coverage is genuinely duplicated, recommend consolidation separately; deletion still requires exact authorization and equivalent retained coverage.
+
+Before confirmation, provide:
+
+1. Exact paths or tightly bounded patterns, separated into tracked, untracked, and ignored files.
+2. Each group’s original purpose and why it is unlikely to be needed again.
+3. Any residual value, dependency/reference check, recovery option, and relevant validation to run afterward.
+4. Where the durable deletion note will be recorded.
+
+After exact confirmation:
+
+1. Recheck the resolved targets and delete only those approved. A changed or expanded list needs new confirmation.
+2. Record a concise durable note in the active handoff/history or the repository's existing decision log. Include the date, grouped paths, original purpose, reason for deletion, and any retained conclusion or replacement. Do not preserve secrets or bulky deleted contents in the note.
+3. Run `git status --short --branch`, search for broken references when relevant, and run the smallest check covering the cleanup.
+4. Automatically commit tracked deletions and the durable note as one coherent cleanup checkpoint. Report separately any confirmed untracked/ignored deletions that Git cannot record.

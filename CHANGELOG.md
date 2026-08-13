@@ -18,6 +18,10 @@ upgrading.
   `GIT_WORKFLOW.md` requires automatic coherent checkpoint commits, exact-path
   staging, narrow feature/fix/chore branches, and explicit authorization for
   deletion, discarded work, ancestry changes, pushes, PRs, and merges.
+- “Clean up” now triggers an inventory and exact confirmation before disposable
+  debug, research, or testing artifacts are deleted. The policy keeps regression
+  and backward-compatibility coverage and records each deleted group’s purpose and
+  disposition for posterity before committing the cleanup.
 
 ### Clarified
 

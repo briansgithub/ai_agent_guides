@@ -310,6 +310,20 @@ class ShimConsistencyTests(unittest.TestCase):
             self.assertIn(operation, policy)
         self.assertIn("explicit authorization", policy)
 
+    def test_git_policy_requires_confirmed_cleanup_and_retains_regressions(self) -> None:
+        policy = (ROOT / "docs" / "handoffs" / "GIT_WORKFLOW.md").read_text(
+            encoding="utf-8"
+        )
+        for phrase in (
+            "authorizes a bounded inventory and recommendation, not deletion",
+            "ask for confirmation",
+            "Keep tests, fixtures, snapshots, scripts, and baselines",
+            "backward compatibility",
+            "original purpose",
+            "durable note",
+        ):
+            self.assertIn(phrase, policy)
+
 
 class IndexRowTests(unittest.TestCase):
     def match(self, row: str):
