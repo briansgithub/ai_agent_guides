@@ -51,6 +51,7 @@ POLICY_FILES = {
     "REPOSITORY.md",
     "MULTI_AGENT.md",
     "MODEL_ROUTING.md",
+    "GIT_WORKFLOW.md",
     "README.md",
 }
 # Link text is presentational; only the branch name and the two targets are
@@ -485,6 +486,7 @@ def main() -> int:
         handoffs / "REPOSITORY.md",
         handoffs / "MULTI_AGENT.md",
         handoffs / "MODEL_ROUTING.md",
+        handoffs / "GIT_WORKFLOW.md",
         handoffs / "README.md",
         handoffs / "HISTORY.md",
         handoffs / "templates" / "BRANCH_HANDOFF.md",

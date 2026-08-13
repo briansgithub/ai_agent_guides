@@ -210,6 +210,9 @@ class SizeRoutingTests(unittest.TestCase):
             self.limit("MODEL_ROUTING.md"), validate_handoffs.POLICY_MAX_CHARACTERS
         )
         self.assertEqual(
+            self.limit("GIT_WORKFLOW.md"), validate_handoffs.POLICY_MAX_CHARACTERS
+        )
+        self.assertEqual(
             self.limit("templates/BRANCH_HANDOFF.md"),
             validate_handoffs.POLICY_MAX_CHARACTERS,
         )
@@ -290,7 +293,22 @@ class ShimConsistencyTests(unittest.TestCase):
     def test_agents_md_routes_formal_plans_to_model_policy(self) -> None:
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("MODEL_ROUTING.md", agents)
-        self.assertIn("runtime provider/model", agents)
+        self.assertIn("runtime model", agents)
+
+    def test_agents_md_routes_git_work_to_commit_policy(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("GIT_WORKFLOW.md", agents)
+        self.assertIn("autonomously commit", agents)
+        self.assertIn("explicit authorization", agents)
+
+    def test_git_policy_preserves_commit_and_destructive_boundaries(self) -> None:
+        policy = (ROOT / "docs" / "handoffs" / "GIT_WORKFLOW.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("standing-authorized", policy)
+        for operation in ("git clean", "git branch -d/-D", "commit --amend", "rebase"):
+            self.assertIn(operation, policy)
+        self.assertIn("explicit authorization", policy)
 
 
 class IndexRowTests(unittest.TestCase):

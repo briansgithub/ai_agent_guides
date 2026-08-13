@@ -10,9 +10,10 @@ Customize this file during installation. It defines standing repository choices 
 - Worktree layout: sibling of the primary checkout, named `../<repo>-wt-<slug>` (or the configured sibling root); never nested in the repository or another worktree
 - Worktree commits are ordinary branch history. `push` publishes the feature branch; an authorized merge/PR from the primary checkout is required to land it on the default branch.
 - Merge strategy: merge commit (`--no-ff`) by default; change deliberately if needed
-- Close sequence: verify reachability from the remote default branch, archive handoff/history, remove the sibling worktree, then `git branch -d`; delete the remote branch only after authorization
+- Close sequence: verify reachability and archive/commit handoff history; obtain explicit authorization before removing a worktree or deleting any local/remote branch
 - Direct feature commits to default branch: prohibited
-- Agent permissions: require explicit owner authorization for commit, push, PR, merge, stash deletion, and branch deletion unless a documented standing instruction applies
+- Agent permissions: normal task-branch commits and branch creation are autonomous; push, PR, merge, release/tag creation, deletion, discarded work, and history/ancestry changes require explicit owner authorization unless a narrower standing instruction applies
+- Git best practices: always follow [GIT_WORKFLOW.md](GIT_WORKFLOW.md) unless the user or a narrower repository rule says otherwise
 
 ## Execution defaults
 
@@ -63,7 +64,7 @@ When agents are actually working concurrently:
 
 ### Toolchain notes for this repository
 
-Customize during installation; delete if not applicable.
+Customize during installation; omit from a new install if not applicable.
 
 - IDE/project model: `<one project per worktree, or not applicable>`
 - Gitignored files to copy into each new worktree: `<e.g. local.properties, .env.local, or none>`
@@ -72,7 +73,7 @@ Customize during installation; delete if not applicable.
 
 Example — an Android app would record: open each worktree as its own Android Studio project rather than switching branches; copy `local.properties` (SDK path) from the primary clone; expect a slow first Gradle sync, with `~/.gradle` shared across projects.
 
-If a stash is unavoidable, use `wip <exact-branch-name>: <reason>`, note it in the owning handoff when recovery depends on it, and apply or drop it only on the named branch after verifying disposition.
+If a stash is unavoidable, use `wip <exact-branch-name>: <reason>`, note it in the owning handoff when recovery depends on it, and apply it only on the named branch after verifying disposition. Dropping or popping requires explicit deletion authorization.
 
 ## Handoff locations
 
@@ -83,3 +84,4 @@ If a stash is unavoidable, use `wip <exact-branch-name>: <reason>`, note it in t
 - Templates: `docs/handoffs/templates/`
 - Parallel-agent procedure: `docs/handoffs/MULTI_AGENT.md`
 - Formal-plan model routing: `docs/handoffs/MODEL_ROUTING.md`
+- Git workflow and commit policy: `docs/handoffs/GIT_WORKFLOW.md`

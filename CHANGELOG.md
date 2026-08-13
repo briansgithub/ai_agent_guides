@@ -14,6 +14,10 @@ upgrading.
   alternative is materially better. The on-demand `MODEL_ROUTING.md` policy
   defines capability classes, total-token accounting, and a developer switch gate
   without hard-coding model catalogs that will go stale.
+- Normal task-branch commits and branch creation are now standing-authorized.
+  `GIT_WORKFLOW.md` requires automatic coherent checkpoint commits, exact-path
+  staging, narrow feature/fix/chore branches, and explicit authorization for
+  deletion, discarded work, ancestry changes, pushes, PRs, and merges.
 
 ### Clarified
 

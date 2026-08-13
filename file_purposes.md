@@ -9,7 +9,7 @@ an installing repository.
 The `Ships` column says what happens on install:
 
 - **yes** — copy verbatim.
-- **seeded** — copy, then reset to the target's own content.
+- **seeded** — copy, then replace with the target's own content.
 - **no** — do not copy. Copying these produces an install that *passes validation
   while carrying this repository's history as its own*, which nothing detects.
 
@@ -37,7 +37,7 @@ win. Each is capped at 600 characters, and a test asserts it points at `AGENTS.m
 | `best_practices.md` | Qodo | yes |
 | `QWEN.md`, `AGENT.md`, `.trae/rules/project_rules.md`, `.idx/airules.md`, `.kilocode/rules/agents.md` | Qwen, Amp, Trae, Firebase Studio, Kilo | yes |
 
-Delete any shim the target does not use.
+Targets may omit unused shims; deleting one from an existing repository requires explicit authorization.
 
 ## On-demand policy documents
 
@@ -49,6 +49,7 @@ Routed to from `AGENTS.md` only when relevant; never startup reading.
 | `docs/handoffs/REPOSITORY.md` | Repository-specific configuration: default branch, merge strategy, agent permissions, standing check profile, toolchain notes. The file installers customize first. | yes |
 | `docs/handoffs/MULTI_AGENT.md` | Git worktree isolation for genuinely concurrent agents. Toolchain-neutral. | yes |
 | `docs/handoffs/MODEL_ROUTING.md` | Formal-plan model routing: runtime identity, capability classes, total-token optimization, and the developer switch gate. | yes |
+| `docs/handoffs/GIT_WORKFLOW.md` | Default Git practices: narrow branches, exact staging, autonomous checkpoint commits, and authorization gates for destructive or ancestry-changing operations. | yes |
 
 ## Branch records
 

@@ -34,6 +34,7 @@ Routine questions, localized edits, and read-only work do not require the full p
 - `REPOSITORY.md`: repository-specific workflow, permissions, and check profiles
 - `MULTI_AGENT.md`: concurrent-agent isolation with Git worktrees
 - `MODEL_ROUTING.md`: model selection and switch gate used only for formal plans
+- `GIT_WORKFLOW.md`: branching, staging, autonomous commits, and destructive-action gates
 - `templates/`: starter branch/archive files
 
 Paths mirror branch names, for example `feature/example.md` and `feature/example.history.md`.
@@ -105,6 +106,7 @@ Before the final response:
 4. Update `README.md` only if branch inventory, role, or merge order changed.
 5. Append history only for a meaningful milestone.
 6. Run `python scripts/validate_handoffs.py` once after structural handoff changes or when required by the PR profile. CI may provide the check for ordinary content-only updates.
+7. When the result is a coherent validated checkpoint, stage only owned paths, review the staged diff, and commit autonomously under `GIT_WORKFLOW.md`.
 
 Do not perform handoff maintenance for read-only work, routine inspection, a no-op session, or an ordinary edit that leaves durable continuation context unchanged. If interrupted during material unfinished work, record the blocker, relevant uncommitted state, and the first safe next action.
 
@@ -130,21 +132,21 @@ Merge-ready means scope is complete, unrelated WIP is absent, the configured che
 4. Move the handoff/history to mirrored `archive/` paths and freeze the handoff to final purpose, landed behavior, validation, disposition, and remaining cleanup.
 5. Append one close entry to global `HISTORY.md`.
 6. Remove the branch from active `README.md`; update the default-branch handoff only if durable context changed.
-7. Delete remote/local branches only after reachability verification, then commit and push the archival cleanup when authorized.
-8. From the primary checkout, run `git worktree list`, remove the obsolete sibling worktree only after its feature work is merged and reachable from the default branch, then delete the local branch with `git branch -d`; delete the remote branch only after authorization. A pushed but unmerged branch stays preserved unless the owner explicitly parks or abandons it.
+7. Commit archival documentation autonomously. Push only when authorized.
+8. After reachability verification, obtain explicit authorization before deleting remote/local branches or removing the sibling worktree. A pushed but unmerged branch stays preserved unless the owner explicitly parks or abandons it.
 
-Use `git branch -d`; use `-D` only after verified reachability and a known-safe refusal.
+For an authorized branch deletion, use `git branch -d`; use `-D` only when separately authorized after verified reachability and a known-safe refusal.
 
 Worktrees are sibling checkouts of normal branches, not separate histories. A feature commit is already in Git's object history, but it reaches the default branch only through an authorized merge/PR. `git push` alone does not merge it. Never force-remove a dirty/unmerged worktree or another agent's checkout.
 
 ## Stashes and recoverability
 
-Delete a stash only after comparing it with reachable work and establishing that all meaningful content is implemented or explicitly abandoned. Never delete a unique stash or wanted commit. Prefer a dedicated worktree over stashing to make room for another agent.
+Delete a stash only with explicit authorization, after comparing it with reachable work and establishing that all meaningful content is implemented or explicitly abandoned. Never delete a unique stash or wanted commit. Prefer a dedicated worktree over stashing to make room for another agent.
 
 ## New branches
 
 1. Update from the remote default branch when authorized and relevant.
-2. Create one narrow `feature/`, `fix/`, or `chore/` branch; use a dedicated sibling worktree for actual concurrent work and record its path/owned paths in the handoff.
+2. Autonomously create one narrow `feature/`, `fix/`, or `chore/` branch; use a dedicated sibling worktree for actual concurrent work and record its path/owned paths in the handoff.
 3. Create the mirrored handoff/history from templates and record the objective and base milestone.
 4. Keep commits purpose-focused and exclude secrets, generated output, IDE-local state, and unrelated formatting.
 5. Use the standing validation profile, merge promptly when ready, and complete archival after merge.

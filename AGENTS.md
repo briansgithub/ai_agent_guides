@@ -6,12 +6,11 @@ These defaults apply everywhere. Rules marked *if present* use optional kit file
 
 ## Work
 
-- Start from the request and the files it names. Run `git status --short --branch` before editing.
-- Preserve unrelated changes. Never assume uncommitted work is disposable.
-- Do not write a formal plan for clear, localized work. Plan when the task is ambiguous, high-risk, multi-phase, dependency-ordered, cross-system, or spans sessions.
-- Reuse an existing plan. Update it only when the approach changes materially.
-- When planning, report the runtime provider/model or `unknown`, tag each phase with its least-cost capable route, and follow `docs/handoffs/MODEL_ROUTING.md` *if present*. Ask the developer to switch before a phase when a known alternative is materially better; never guess identity, availability, or price.
-- Make the narrowest change that satisfies the request. Do not widen scope; say what you deliberately left out.
+- Start with requested files and `git status --short --branch`; preserve unrelated and uncommitted work.
+- Do not formally plan clear, localized work. Plan only when requested or when ambiguity, risk, dependent phases, cross-system work, or session continuity warrants it; reuse plans until the approach changes.
+- When planning, report the runtime model or `unknown`, tag phases with least-cost capable routes, and follow `docs/handoffs/MODEL_ROUTING.md` *if present*. Ask for a switch when a known alternative is materially better; never guess identity, availability, or price.
+- *If present:* follow `docs/handoffs/GIT_WORKFLOW.md`. Use a narrow task branch and autonomously commit coherent, validated checkpoints containing only in-scope files. Require explicit authorization for deletion, discarded work, or history/ancestry changes beyond a normal commit.
+- Make the narrowest change that satisfies the request; name deliberate exclusions.
 
 ## Context
 
@@ -39,7 +38,7 @@ These defaults apply everywhere. Rules marked *if present* use optional kit file
 - *If `docs/handoffs/` is present:* it is that location. Read the active handoff only when resuming or inheriting work, or when scope is unclear, and read only the newest history you need. Route on demand — `MASTER_HANDOFF.md` for lifecycle and recovery, `REPOSITORY.md` for policy and check profiles, `MULTI_AGENT.md` only when agents are actually concurrent.
 - *If present:* update the handoff once, at the end, and only when objective, scope, decisions, blockers, risks, validation, or next action changed. Skip it for read-only, routine, and no-op work. Update the index only for branch inventory, role, or merge order; append history only for milestones.
 - Concurrent agents need separate worktrees: sibling folders beside the primary checkout, never nested. Each is a normal branch; `push` publishes it, only an authorized merge or PR lands it.
-- Close work from the primary checkout: verify the merge is reachable, archive the handoff, remove the sibling worktree, then `git branch -d`. Delete a remote branch only with authorization. Stop on dirty or unmerged work; never force-delete or overwrite another agent's work.
+- Close work from the primary checkout: verify reachability and archive the handoff, then obtain explicit authorization before removing worktrees or deleting local/remote branches. Stop on dirty or unmerged work; never force-delete or overwrite another agent's work.
 - *If present:* run `python scripts/validate_handoffs.py --quiet` after structural handoff changes. Never delete branch documentation.
 
 If `python` is missing, use `python3` or `py`.

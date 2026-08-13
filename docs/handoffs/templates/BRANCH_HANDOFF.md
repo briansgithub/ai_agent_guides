@@ -31,7 +31,7 @@
 ## Merge and cleanup
 
 - Primary checkout: `<path used for merge/cleanup>`
-- After merge: verify reachability from the remote default branch, archive this handoff/history, remove the sibling worktree, then delete local/remote branches only with authorization.
+- After merge: verify reachability and archive this handoff/history; obtain explicit authorization before removing the sibling worktree or deleting local/remote branches.
 
 Do not routinely copy tip, clean/dirty state, upstream tracking, ahead/behind counts, or complete stash inventory from Git. Record identifiers only when essential to recovery or a durable milestone.
 

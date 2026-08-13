@@ -7,10 +7,11 @@ Active branch inventory and merge order. Consult the linked handoff when resumin
 | `main` | Shared integration branch | [main.md](main.md) | [history](main.history.md) |
 | `chore/flatten-kit-to-root` | Restructure for agent discovery | [handoff](chore/flatten-kit-to-root.md) | [history](chore/flatten-kit-to-root.history.md) |
 | `chore/model-routing-policy` | Formal-plan model routing | [handoff](chore/model-routing-policy.md) | [history](chore/model-routing-policy.history.md) |
+| `chore/autonomous-commit-policy` | Autonomous commits and Git safety | [handoff](chore/autonomous-commit-policy.md) | [history](chore/autonomous-commit-policy.history.md) |
 
 ## Current merge order
 
-Merge `chore/flatten-kit-to-root` to `main`, then merge `chore/model-routing-policy`; the latter is based on the flattened layout. Archive each branch's records in its merge.
+Merge in order: `chore/flatten-kit-to-root`, `chore/model-routing-policy`, then `chore/autonomous-commit-policy`. Each branch is based on its predecessor; archive each branch's records in its merge.
 
 ## Row format
 

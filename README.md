@@ -33,7 +33,7 @@ To use it elsewhere, see [Install in another repository](#install-in-another-rep
 | `best_practices.md` | Qodo |
 | `QWEN.md`, `AGENT.md`, `.trae/rules/project_rules.md`, `.idx/airules.md`, `.kilocode/rules/agents.md` | Qwen, Amp, Trae, Firebase Studio, Kilo |
 
-Delete any you do not use — only `AGENTS.md` is required. Adding support for another tool is one short file pointing at `AGENTS.md`, plus its path in `ENTRYPOINT_LIMITS`.
+Targets may omit unused shims—only `AGENTS.md` is required. Removing an existing shim requires explicit authorization. Adding support for another tool is one short file pointing at `AGENTS.md`, plus its path in `ENTRYPOINT_LIMITS`.
 
 These files are discovered relative to the workspace a tool opens. An agent working in another repository will not normally scan this unrelated directory automatically. Either install the kit into that repository's root or configure the tool's global/user instructions to read this root `AGENTS.md`. Verify each client with a small rule-following smoke task; unsupported or disabled conventions remain inert.
 
@@ -54,7 +54,7 @@ Then, in the target:
 1. Rename `docs/handoffs/main.md` and `main.history.md` to the target's default branch, and update the index row in `docs/handoffs/README.md` to match. Skipping this fails validation immediately: the checked-out branch must appear in the index.
 2. Reduce the index in `docs/handoffs/README.md` to that one row, and empty the entries under `docs/handoffs/HISTORY.md`.
 3. Edit `docs/handoffs/REPOSITORY.md` — default branch, check profile, permissions, toolchain notes, and optional standing model routes.
-4. Delete any per-tool shim the target does not use.
+4. Omit unused per-tool shims from a new install; obtain explicit authorization before removing one from an existing repository.
 5. Run `python scripts/validate_handoffs.py --installed`. It will report the placeholders in the renamed default-branch records; filling them is step 6.
 6. Fill those fields and commit the complete setup.
 
@@ -67,6 +67,8 @@ If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
 The default workflow avoids formal plans for straightforward changes, loads handoff/history documents only when relevant, and uses risk-proportional verification. Repository-wide analysis or unusually expensive validation should be confirmed with the owner when it materially expands an otherwise bounded request.
 
 Formal plans use [MODEL_ROUTING.md](docs/handoffs/MODEL_ROUTING.md): the agent reports only runtime-known identity, tags each phase with the least-cost capable model route, and pauses before a phase when a known available alternative is materially better. Exact model catalogs stay outside the evergreen defaults because names, access, and prices change.
+
+Git work follows [GIT_WORKFLOW.md](docs/handoffs/GIT_WORKFLOW.md). Agents create narrow task branches and automatically commit coherent, validated checkpoints containing only their in-scope files. Normal commits and branch creation are standing-authorized; deletion, discarded work, history/ancestry changes, pushes, PRs, and merges require explicit authorization unless a narrower repository policy grants it.
 
 ## Context and output controls
 
