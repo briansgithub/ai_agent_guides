@@ -48,6 +48,7 @@ Routed to from `AGENTS.md` only when relevant; never startup reading.
 | `docs/handoffs/MASTER_HANDOFF.md` | Lifecycle reference: startup, context budget, handoff contents, per-branch history, close and archive sequence, verification and PR readiness, stash recovery. | yes |
 | `docs/handoffs/REPOSITORY.md` | Repository-specific configuration: default branch, merge strategy, agent permissions, standing check profile, toolchain notes. The file installers customize first. | yes |
 | `docs/handoffs/MULTI_AGENT.md` | Git worktree isolation for genuinely concurrent agents. Toolchain-neutral. | yes |
+| `docs/handoffs/MODEL_ROUTING.md` | Formal-plan model routing: runtime identity, capability classes, total-token optimization, and the developer switch gate. | yes |
 
 ## Branch records
 

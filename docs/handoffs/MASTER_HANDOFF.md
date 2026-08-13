@@ -33,6 +33,7 @@ Routine questions, localized edits, and read-only work do not require the full p
 - `README.md`: active branch inventory and merge order
 - `REPOSITORY.md`: repository-specific workflow, permissions, and check profiles
 - `MULTI_AGENT.md`: concurrent-agent isolation with Git worktrees
+- `MODEL_ROUTING.md`: model selection and switch gate used only for formal plans
 - `templates/`: starter branch/archive files
 
 Paths mirror branch names, for example `feature/example.md` and `feature/example.history.md`.
@@ -50,6 +51,8 @@ When agents are actually concurrent, read `MULTI_AGENT.md` and confirm this fold
 ## Planning and context budget
 
 Do not create a formal implementation plan for straightforward, localized, or clearly specified work. IDE context does not itself justify a plan. Use a plan only when the user requests it or when ambiguity, risk, multiple dependent phases, cross-system coordination, or multi-session continuity makes it useful. Reuse rather than repeatedly restating a plan.
+
+When a formal plan is warranted, apply `MODEL_ROUTING.md`: identify only runtime-reported model information, tag each phase with the least-cost capable route, and pause before a phase only when a known available alternative is materially better. Model routing must not turn routine work into a plan or add repeated comparison prose.
 
 Start investigations narrowly. Prefer search over reading: locate with grep/glob and read the lines that matter. Batch independent reads and commands into one step, do not re-read a file you just wrote, and cite `path:line` instead of pasting file contents back to the user.
 

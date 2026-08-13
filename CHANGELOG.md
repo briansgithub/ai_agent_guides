@@ -5,6 +5,22 @@ installed copy cannot be upgraded by a package manager. Record the installed
 version in that repository's handoff history, and consult this file when
 upgrading.
 
+## Unreleased
+
+### Added
+
+- Formal plans now identify the runtime-reported provider/model, route each phase
+  to the least-cost capable model, and pause before a phase when a known available
+  alternative is materially better. The on-demand `MODEL_ROUTING.md` policy
+  defines capability classes, total-token accounting, and a developer switch gate
+  without hard-coding model catalogs that will go stale.
+
+### Clarified
+
+- Root-level pointer shims improve discovery only when the client supports that
+  convention and opens this directory as its workspace. Agents working elsewhere
+  still need an installed copy or a global/user instruction pointing here.
+
 ## 2.1.0
 
 Flattens the kit to the repository root so agent rules are discoverable without

@@ -207,6 +207,9 @@ class SizeRoutingTests(unittest.TestCase):
             self.limit("MASTER_HANDOFF.md"), validate_handoffs.POLICY_MAX_CHARACTERS
         )
         self.assertEqual(
+            self.limit("MODEL_ROUTING.md"), validate_handoffs.POLICY_MAX_CHARACTERS
+        )
+        self.assertEqual(
             self.limit("templates/BRANCH_HANDOFF.md"),
             validate_handoffs.POLICY_MAX_CHARACTERS,
         )
@@ -283,6 +286,11 @@ class ShimConsistencyTests(unittest.TestCase):
             validate_handoffs.SHIM_LIMIT,
             "AGENTS.md is shim-sized; the rules may have been moved out of it",
         )
+
+    def test_agents_md_routes_formal_plans_to_model_policy(self) -> None:
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("MODEL_ROUTING.md", agents)
+        self.assertIn("runtime provider/model", agents)
 
 
 class IndexRowTests(unittest.TestCase):

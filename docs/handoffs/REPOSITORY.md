@@ -42,6 +42,15 @@ For ordinary changes, run only the checks relevant to the affected behavior. Use
 
 Wrap noisy commands with `python scripts/compact_check.py --name <label> -- <command>` so full failure logs remain local and successful output can be suppressed with `--quiet`.
 
+## Model routing
+
+- Runtime identity source: host/system metadata; never infer missing fields
+- Named routes available to this repository: not configured by the portable kit
+- Default: use the capability classes and switch gate in [MODEL_ROUTING.md](MODEL_ROUTING.md)
+- Switch authority: developer/owner
+
+Installers may replace “not configured” with stable mappings for fast/light, balanced coding, frontier/high-risk, and specialist work. A standing map prevents repeated model research; keep time-sensitive pricing and availability out unless someone maintains it.
+
 ## Multi-agent isolation
 
 When agents are actually working concurrently:
@@ -73,3 +82,4 @@ If a stash is unavoidable, use `wip <exact-branch-name>: <reason>`, note it in t
 - Global close ledger: `docs/handoffs/HISTORY.md`
 - Templates: `docs/handoffs/templates/`
 - Parallel-agent procedure: `docs/handoffs/MULTI_AGENT.md`
+- Formal-plan model routing: `docs/handoffs/MODEL_ROUTING.md`

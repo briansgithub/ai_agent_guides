@@ -1,6 +1,6 @@
 # Portable Git Handoff System
 
-Reusable branch-handoff framework for any agent that honors `AGENTS.md`, with pointer shims for every other rule-file convention in common use.
+Reusable branch-handoff framework for agents that honor `AGENTS.md`, with small pointer shims for many common rule-file conventions.
 
 Version: see [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md). Record the installed version in the repository's handoff history so an upgrade can tell what it is replacing.
 
@@ -8,7 +8,7 @@ Version: see [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md). Record the ins
 
 **This repository *is* the kit, and it installs itself.** `AGENTS.md`, `docs/handoffs/`, `scripts/`, and `.github/workflows/` here are live, not samples — the validator validates *this* repository and the tests run against it.
 
-Agents and IDEs pointed at this directory need no configuration: `AGENTS.md` is authoritative, and every per-tool file at the root is a short pointer to it.
+When this directory is the workspace root and a client honors one of the registered conventions, `AGENTS.md` is authoritative and each tool-specific file is only a short pointer to it. No file layout can force an IDE to load rules it does not support.
 
 To use it elsewhere, see [Install in another repository](#install-in-another-repository).
 
@@ -35,6 +35,8 @@ To use it elsewhere, see [Install in another repository](#install-in-another-rep
 
 Delete any you do not use — only `AGENTS.md` is required. Adding support for another tool is one short file pointing at `AGENTS.md`, plus its path in `ENTRYPOINT_LIMITS`.
 
+These files are discovered relative to the workspace a tool opens. An agent working in another repository will not normally scan this unrelated directory automatically. Either install the kit into that repository's root or configure the tool's global/user instructions to read this root `AGENTS.md`. Verify each client with a small rule-following smoke task; unsupported or disabled conventions remain inert.
+
 ## Install in another repository
 
 Copy everything **except**:
@@ -51,7 +53,7 @@ Then, in the target:
 
 1. Rename `docs/handoffs/main.md` and `main.history.md` to the target's default branch, and update the index row in `docs/handoffs/README.md` to match. Skipping this fails validation immediately: the checked-out branch must appear in the index.
 2. Reduce the index in `docs/handoffs/README.md` to that one row, and empty the entries under `docs/handoffs/HISTORY.md`.
-3. Edit `docs/handoffs/REPOSITORY.md` — default branch, check profile, permissions, toolchain notes.
+3. Edit `docs/handoffs/REPOSITORY.md` — default branch, check profile, permissions, toolchain notes, and optional standing model routes.
 4. Delete any per-tool shim the target does not use.
 5. Run `python scripts/validate_handoffs.py --installed`. It will report the placeholders in the renamed default-branch records; filling them is step 6.
 6. Fill those fields and commit the complete setup.
@@ -63,6 +65,8 @@ Copying the excluded paths produces an install that **passes validation while ca
 If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
 
 The default workflow avoids formal plans for straightforward changes, loads handoff/history documents only when relevant, and uses risk-proportional verification. Repository-wide analysis or unusually expensive validation should be confirmed with the owner when it materially expands an otherwise bounded request.
+
+Formal plans use [MODEL_ROUTING.md](docs/handoffs/MODEL_ROUTING.md): the agent reports only runtime-known identity, tags each phase with the least-cost capable model route, and pauses before a phase when a known available alternative is materially better. Exact model catalogs stay outside the evergreen defaults because names, access, and prices change.
 
 ## Context and output controls
 

@@ -2,7 +2,7 @@
 
 Use the least context, planning, and validation that completes the task reliably.
 
-These defaults apply to every repository. Rules marked *if present* name files this kit installs; where a repository does not have them, keep the principle and skip the mechanism. Where an ancestor-directory or global instruction file conflicts with a rule here, follow the narrower repository-scoped rule and say which instruction you set aside — never silently pick one.
+These defaults apply everywhere. Rules marked *if present* use optional kit files; without them, keep the principle and skip the mechanism. On conflict, follow narrower repository-scoped instructions and name what you set aside.
 
 ## Work
 
@@ -10,6 +10,7 @@ These defaults apply to every repository. Rules marked *if present* name files t
 - Preserve unrelated changes. Never assume uncommitted work is disposable.
 - Do not write a formal plan for clear, localized work. Plan when the task is ambiguous, high-risk, multi-phase, dependency-ordered, cross-system, or spans sessions.
 - Reuse an existing plan. Update it only when the approach changes materially.
+- When planning, report the runtime provider/model or `unknown`, tag each phase with its least-cost capable route, and follow `docs/handoffs/MODEL_ROUTING.md` *if present*. Ask the developer to switch before a phase when a known alternative is materially better; never guess identity, availability, or price.
 - Make the narrowest change that satisfies the request. Do not widen scope; say what you deliberately left out.
 
 ## Context
