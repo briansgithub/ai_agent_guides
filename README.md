@@ -37,6 +37,8 @@ Targets may omit unused shims—only `AGENTS.md` is required. Removing an existi
 
 These files are discovered relative to the workspace a tool opens. An agent working in another repository will not normally scan this unrelated directory automatically. Either install the kit into that repository's root or configure the tool's global/user instructions to read this root `AGENTS.md`. Verify each client with a small rule-following smoke task; unsupported or disabled conventions remain inert.
 
+Record real discovery results in [PLATFORM_COMPATIBILITY.md](docs/handoffs/PLATFORM_COMPATIBILITY.md). Its live-client matrix distinguishes a registered filename from a tested integration without adding startup context.
+
 ## Install in another repository
 
 Copy everything **except**:
@@ -64,11 +66,11 @@ Copying the excluded paths produces an install that **passes validation while ca
 
 If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
 
-The default workflow avoids formal plans for straightforward changes, loads handoff/history documents only when relevant, and uses risk-proportional verification. Repository-wide analysis or unusually expensive validation should be confirmed with the owner when it materially expands an otherwise bounded request.
+The default workflow avoids formal plans for straightforward changes, loads handoff/history documents only when relevant, and uses risk-proportional verification. Coordination has three tiers: routine localized work uses Git only; durable material or multi-session work adds branch records; concurrent work adds one sibling worktree per agent. Repository-wide analysis or unusually expensive validation should be confirmed with the owner when it materially expands an otherwise bounded request.
 
 Formal plans use [MODEL_ROUTING.md](docs/handoffs/MODEL_ROUTING.md): the agent reports only runtime-known identity, tags each phase with the least-cost capable model route, and pauses before a phase when a known available alternative is materially better. Exact model catalogs stay outside the evergreen defaults because names, access, and prices change.
 
-Git work follows [GIT_WORKFLOW.md](docs/handoffs/GIT_WORKFLOW.md). Agents create narrow task branches and automatically commit coherent, validated checkpoints containing only their in-scope files. Normal commits and branch creation are standing-authorized; deletion, discarded work, history/ancestry changes, pushes, PRs, and merges require explicit authorization unless a narrower repository policy grants it.
+Git work follows [GIT_WORKFLOW.md](docs/handoffs/GIT_WORKFLOW.md). Agents create narrow task branches and automatically commit coherent, validated checkpoints containing only their in-scope files. Normal commits and branch creation are standing-authorized; other mutations require current authorization or an exact standing grant recorded in [REPOSITORY.md](docs/handoffs/REPOSITORY.md). Ambiguous or example grants authorize nothing.
 
 “Clean up” starts a candidate inventory. The agent identifies disposable debug/research/testing artifacts, explains their purpose, and requests confirmation for exact targets. Regression and backward-compatibility coverage is retained. Confirmed deletions receive a durable purpose/disposition note and a focused cleanup commit.
 
@@ -112,7 +114,7 @@ python -m unittest discover -s scripts -p "test_*.py"
 
 Standard library only — an installing repository does not inherit a test dependency. CI runs these plus the structural validator on Linux and Windows.
 
-The end-to-end test validates *this* repository, so a new branch needs its handoff records before the suite passes — even a branch opened for a one-line fix. That is the kit applying to itself; create the two records from `docs/handoffs/templates/` as `MASTER_HANDOFF.md`'s New branches procedure already requires.
+The default validator allows routine branches without handoff records. Durable and concurrent branches create the two records from `docs/handoffs/templates/`, add the active-index row, and validate with `--require-current-handoff`. Installed repositories also use `--installed`; the flags may be combined.
 
 For agents that are actually working concurrently, follow `docs/handoffs/MULTI_AGENT.md`: one Git worktree (folder + branch) per agent. Record any toolchain-specific worktree steps — files to copy, one-project-per-worktree IDEs — in `docs/handoffs/REPOSITORY.md`.
 

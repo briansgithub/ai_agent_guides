@@ -25,7 +25,7 @@
 
 None blocking. Two accepted consequences:
 
-- The tool test suite is now coupled to live repository state. `test_kit_validates_clean` fails on any branch without handoff records, including a branch opened for a one-line fix. This is intended dogfooding, documented in the README rather than worked around.
+- This branch uses durable records. A later descendant added an explicit strict-validation flag so routine branches can omit records while durable/concurrent branches remain enforced.
 - CI is now in a location GitHub would execute, but no remote is configured, so nothing runs yet. Flattening was necessary, not sufficient.
 
 ## Next action

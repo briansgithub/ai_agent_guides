@@ -11,8 +11,9 @@
 
 - Base/PR target: `<branch>`
 - Role: `<feature/fix/chore/integration>`
-- Worktree: `<sibling path; one branch only>`
-- Owned paths: `<paths this branch may edit; no-go paths if useful>`
+- Coordination tier: `<durable or concurrent>`
+- Worktree: `<primary checkout for one durable agent; sibling path when concurrent>`
+- Owned paths: `<required when concurrent; otherwise optional paths/no-go paths>`
 - History: [<filename>.history.md](<filename>.history.md)
 - Decisions: `<durable owner or implementation decisions>`
 
@@ -48,6 +49,7 @@ Do not routinely copy tip, clean/dirty state, upstream tracking, ahead/behind co
 ## Constraints and decisions
 - Base/PR target: main
 - Role: feature
+- Coordination tier: concurrent
 - Worktree: ../app-wt-session-expiry
 - Owned paths: src/auth/**, tests/auth/**. No-go: src/billing/**.
 - History: [feature/session-expiry.history.md](session-expiry.history.md)

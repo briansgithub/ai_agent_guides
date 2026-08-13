@@ -12,14 +12,35 @@ Customize this file during installation. It defines standing repository choices 
 - Merge strategy: merge commit (`--no-ff`) by default; change deliberately if needed
 - Close sequence: verify reachability and archive/commit handoff history; obtain explicit authorization before removing a worktree or deleting any local/remote branch
 - Direct feature commits to default branch: prohibited
-- Agent permissions: normal task-branch commits and branch creation are autonomous; push, PR, merge, release/tag creation, deletion, discarded work, and history/ancestry changes require explicit owner authorization unless a narrower standing instruction applies
+- Agent permissions: normal task-branch commits and branch creation are autonomous; every other mutation requires current owner authorization or an exact standing grant below
 - Git best practices: always follow [GIT_WORKFLOW.md](GIT_WORKFLOW.md) unless the user or a narrower repository rule says otherwise
+
+### Standing permission profile
+
+Standing grants prevent repeated approval prompts for well-bounded actions. They are authorization, not suggestions: add one only with owner approval. An agent may use a grant only when its action, resolved targets, branch/remote, conditions, and validation all match exactly. Missing, example, expired, or ambiguous entries mean **ask**. A current owner instruction can narrow or revoke any grant.
+
+Defaults already granted by this kit: create a narrow task branch; make coherent in-scope commits on it. No additional repository grants are configured.
+
+| Action | Exact scope | Conditions and required validation | Owner/date |
+|---|---|---|---|
+
+<!-- Examples only; copying an example does not grant permission.
+| `push-task-branch` | `origin`, `feature/*` and `fix/*` only | no force; relevant checks pass; report remote ref | Owner, YYYY-MM-DD |
+| `create-pr` | current task branch -> `main` | ready summary and configured PR checks | Owner, YYYY-MM-DD |
+| `cleanup-untracked` | `.tmp/**`, `build/diagnostics/**` | inventory; generated-only; no references; durable deletion note | Owner, YYYY-MM-DD |
+| `cleanup-tracked` | `debug-artifacts/**` | exact inventory; regression assets excluded; focused test | Owner, YYYY-MM-DD |
+| `run-expensive-check` | `<exact command/profile>` | `<cost/time/trigger limits>` | Owner, YYYY-MM-DD |
+-->
+
+Do not use standing grants for force pushes, history rewriting, discarding unknown work, deleting unique/unmerged work, secrets, production data, or unbounded path patterns. Those always require fresh authorization. Record grant changes as durable owner decisions.
 
 ## Execution defaults
 
 - Formal implementation plan: not required for routine, localized, or clearly specified work, including ordinary IDE prompts
 - Use a plan when requested or when work is ambiguous, high-risk, multi-phase, dependency-ordered, cross-system, or likely to span sessions
 - Reuse an existing plan; update it only when the approach materially changes
+- Coordination tier: **routine** localized/single-session work uses Git only; **durable** material, risky, decision-heavy, or multi-session work uses a branch handoff/history; **concurrent** work also uses one sibling worktree per agent
+- Routine branches are intentionally absent from the handoff index. Durable and concurrent branches must be indexed and validated with `--require-current-handoff`
 - Context strategy: inspect relevant files first and expand only when evidence or risk requires it
 - Context preflight: batch-scan generated or unfamiliar artifacts (logs, build output, data dumps, vendored trees) with `python scripts/context_probe.py scan <paths>` before emitting contents; ordinary source and documentation do not need a preflight
 - Append-only records: search first when possible; otherwise retrieve recent log/history chunks and page backward only as needed
@@ -31,6 +52,7 @@ Customize this file during installation. It defines standing repository choices 
 Agents may run the configured baseline without asking for approval before every PR. Customize commands during installation:
 
 - Handoff structure: `python scripts/validate_handoffs.py --installed`
+- Current durable/concurrent branch: add `--require-current-handoff`
 - Handoff tool tests: `python -m unittest discover -s scripts -p "test_*.py"` (only when `scripts/` changes)
 - Build: `<command or not configured>`
 - Unit tests: `<command or not configured>`

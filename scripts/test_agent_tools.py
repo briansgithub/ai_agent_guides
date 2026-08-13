@@ -18,6 +18,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parent
 ROOT = SCRIPTS.parent
@@ -213,6 +214,10 @@ class SizeRoutingTests(unittest.TestCase):
             self.limit("GIT_WORKFLOW.md"), validate_handoffs.POLICY_MAX_CHARACTERS
         )
         self.assertEqual(
+            self.limit("PLATFORM_COMPATIBILITY.md"),
+            validate_handoffs.POLICY_MAX_CHARACTERS,
+        )
+        self.assertEqual(
             self.limit("templates/BRANCH_HANDOFF.md"),
             validate_handoffs.POLICY_MAX_CHARACTERS,
         )
@@ -282,6 +287,17 @@ class ShimConsistencyTests(unittest.TestCase):
             missing, f"registered but absent from README.md: {', '.join(missing)}"
         )
 
+    def test_platform_matrix_covers_every_registered_entrypoint(self) -> None:
+        matrix = (
+            ROOT / "docs" / "handoffs" / "PLATFORM_COMPATIBILITY.md"
+        ).read_text(encoding="utf-8")
+        missing = [
+            rel for rel in validate_handoffs.ENTRYPOINT_LIMITS if rel not in matrix
+        ]
+        self.assertFalse(
+            missing, f"registered but absent from platform matrix: {', '.join(missing)}"
+        )
+
     def test_agents_md_is_the_only_authoritative_file(self) -> None:
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertGreater(
@@ -323,6 +339,71 @@ class ShimConsistencyTests(unittest.TestCase):
             "durable note",
         ):
             self.assertIn(phrase, policy)
+
+    def test_repository_policy_supports_exact_standing_grants(self) -> None:
+        policy = (ROOT / "docs" / "handoffs" / "REPOSITORY.md").read_text(
+            encoding="utf-8"
+        )
+        for phrase in (
+            "Standing permission profile",
+            "Missing, example, expired, or ambiguous entries mean **ask**",
+            "push-task-branch",
+            "cleanup-untracked",
+            "force pushes",
+        ):
+            self.assertIn(phrase, policy)
+
+
+class CoordinationTierTests(TempDirCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.handoffs = self.tmp / "docs" / "handoffs"
+        self.handoffs.mkdir(parents=True)
+        main = self.handoffs / "main.md"
+        history = self.handoffs / "main.history.md"
+        main.write_text("main", encoding="utf-8")
+        history.write_text("history", encoding="utf-8")
+        self.entries = {"main": (main, history)}
+
+    def git_result(self, args: tuple[str, ...]) -> subprocess.CompletedProcess[str]:
+        outputs = {
+            ("rev-parse", "--is-inside-work-tree"): "true\n",
+            ("rev-parse", "--show-toplevel"): f"{self.tmp}\n",
+            ("branch", "--show-current"): "fix/routine-copy\n",
+            ("for-each-ref", "--format=%(refname:short)", "refs/heads"): (
+                "main\nfix/routine-copy\n"
+            ),
+        }
+        return subprocess.CompletedProcess(
+            ["git", *args], 0, stdout=outputs.get(args, ""), stderr=""
+        )
+
+    def validate(self, require_current: bool) -> list[str]:
+        errors: list[str] = []
+        with mock.patch.object(
+            validate_handoffs,
+            "run_git",
+            side_effect=lambda _root, *args: self.git_result(args),
+        ):
+            validate_handoffs.validate_active_pairs(
+                self.tmp,
+                self.handoffs,
+                self.entries,
+                errors,
+                verbose=False,
+                require_current_handoff=require_current,
+            )
+        return errors
+
+    def test_routine_branch_does_not_require_handoff(self) -> None:
+        self.assertEqual(self.validate(require_current=False), [])
+
+    def test_durable_flag_requires_current_branch_handoff(self) -> None:
+        errors = self.validate(require_current=True)
+        self.assertTrue(any("missing active handoff" in error for error in errors))
+        self.assertTrue(
+            any("missing from docs/handoffs/README.md" in error for error in errors)
+        )
 
 
 class IndexRowTests(unittest.TestCase):

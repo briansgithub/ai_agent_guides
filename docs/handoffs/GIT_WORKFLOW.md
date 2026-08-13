@@ -1,6 +1,6 @@
 # Git Workflow and Commit Policy
 
-Follow these defaults unless the user's current request or narrower repository policy says otherwise. A request that names an exact destructive action and target is authorization for that action only; words such as “finish,” “clean up,” “sync,” or “commit” are not deletion or history-rewrite authorization.
+Follow these defaults unless the user's current request or a narrower repository policy says otherwise. A filled standing grant in `REPOSITORY.md` counts as prior authorization only when the action, resolved targets, and conditions match exactly; a blank, example, or ambiguous entry grants nothing. A current request may narrow or revoke a grant. Words such as “finish,” “clean up,” “sync,” or “commit” alone are not deletion or history-rewrite authorization.
 
 ## 1. Inspect and protect
 
@@ -34,7 +34,7 @@ Use a concise imperative subject that describes the outcome. Add a body when the
 
 ## 5. Require explicit authorization for destructive or ancestry-changing Git
 
-Do not perform any of the following without explicit authorization for the exact operation and target:
+Do not perform any of the following without current explicit authorization or an exact standing grant for the operation and target:
 
 - Delete tracked files or directories, branches, tags, remotes, worktrees, stashes, refs, or reflog entries. This includes `git rm`, `git clean`, `git branch -d/-D`, `git tag -d`, `git stash drop/clear`, `git worktree remove/prune`, and remote branch deletion.
 - Discard or replace uncommitted work with `restore`, `checkout --`, `reset`, clean operations, or equivalent filesystem actions.
@@ -42,7 +42,7 @@ Do not perform any of the following without explicit authorization for the exact
 - Force-update refs with `push --force`, `--force-with-lease`, non-fast-forward pushes, or refspec deletion.
 - Bypass safeguards such as hooks or signing requirements.
 
-A normal new commit is the explicit exception: it appends history and is autonomous under section 4. Creating a task branch is also autonomous. Push, PR creation, merge, release/tag creation, and remote changes remain authorization-gated unless `REPOSITORY.md` contains a narrower standing permission.
+A normal new commit is the explicit exception: it appends history and is autonomous under section 4. Creating a task branch is also autonomous. Push, PR creation, merge, release/tag creation, cleanup, and remote changes remain authorization-gated unless `REPOSITORY.md` contains a matching standing grant.
 
 ## 6. Integrate and recover safely
 
@@ -53,7 +53,7 @@ A normal new commit is the explicit exception: it appends history and is autonom
 
 ## 7. Clean temporary artifacts with confirmation
 
-A request such as “clean up” authorizes a bounded inventory and recommendation, not deletion. Find candidates locally, group them by purpose, and ask for confirmation before deleting anything.
+A request such as “clean up” authorizes a bounded inventory and recommendation, not deletion. Find candidates locally, group them by purpose, and ask for confirmation before deleting anything. A matching `REPOSITORY.md` cleanup grant may supply that confirmation in advance, but the inventory, target recheck, durable note, and validation below still apply.
 
 Classify a file as disposable only when both are highly likely:
 

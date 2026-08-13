@@ -1,164 +1,117 @@
-# Master Branch Handoff Protocol
+# Durable Handoff Lifecycle
 
-Permanent handoffs live in `docs/handoffs/` and are committed with the repository. This is a lifecycle reference, not required startup reading for every task. Use the routing rules in `AGENTS.md`.
+Permanent handoffs live in `docs/handoffs/` and travel with their owning branch. This file controls when records exist and how they move through their lifecycle; it is not startup reading for routine work.
 
-## Non-negotiable rules
+Use the specialized policies instead of restating them here:
 
-1. Preserve unrelated user work and never assume uncommitted changes are disposable.
-2. Store durable context in handoffs; obtain transient Git facts from Git when they are relevant.
-3. Active handoffs are replacement-style. Per-branch histories and global `HISTORY.md` are append-only.
-4. Keep `AGENTS.md` below 5,000 characters, per-tool shims below 600, active/archived handoffs below 6,000, each history segment below 12,000, and on-demand policy documents below 20,000 characters. `scripts/validate_handoffs.py` enforces these exact numbers.
-5. Verify only documentation claims that affect the current action, and distinguish Git-verified facts, owner decisions, unknowns, and recommendations.
-6. Keep relevant handoff updates with the commit or PR they describe.
-7. Never delete branch documentation; archive it when the branch closes.
-8. Never run concurrent agents in one shared working directory; use Git worktrees as described in `MULTI_AGENT.md`.
+- [GIT_WORKFLOW.md](GIT_WORKFLOW.md): branches, commits, permissions, cleanup, integration safety
+- [REPOSITORY.md](REPOSITORY.md): repository-specific grants, check profile, toolchain choices
+- [MULTI_AGENT.md](MULTI_AGENT.md): concurrent-agent worktrees and ownership
+- [MODEL_ROUTING.md](MODEL_ROUTING.md): model choice only when a formal plan exists
+- `AGENTS.md`: context and verification defaults
 
-## When to use this protocol
+## Non-negotiable invariants
 
-Consult this file when:
+1. Preserve unrelated work; derive transient branch facts from Git.
+2. Active handoffs are replacement-style. Per-branch histories and global `HISTORY.md` are append-only.
+3. Never delete branch documentation; archive it when work closes.
+4. Never run concurrent agents in one working directory.
+5. Keep `AGENTS.md` below 5,000 characters, shims below 600, handoffs below 6,000, history segments below 12,000, and policy documents below 20,000. The validator enforces these limits.
+6. Keep relevant durable records in the commit or PR they describe.
 
-- creating, resuming, handing off, closing, or recovering branch work;
-- preparing a PR, merge, release, or archival cleanup;
-- changing branch, worktree, stash, or handoff state;
-- durable project context is missing or contradictory.
+## Choose the coordination tier
 
-Routine questions, localized edits, and read-only work do not require the full protocol.
+Use the lightest tier that preserves reliable continuation:
 
-## Layout
+| Tier | Use when | Required state |
+|---|---|---|
+| **Routine** | Localized, single-session work with no material decision, recovery, or coordination need | Git branch/commits only; no handoff, history, or index row |
+| **Durable** | Material, risky, decision-heavy, multi-phase, or likely multi-session work | Mirrored branch handoff/history plus active-index row |
+| **Concurrent** | Two or more agents are actively working in the repository | Durable records plus one sibling worktree per agent and explicit owned/no-go paths |
 
-- `<branch>.md`: concise current operating context
-- `<branch>.history.md`: meaningful dated milestones
-- `archive/<branch>.md` and `.history.md`: frozen closed records
-- `HISTORY.md`: one close entry per branch
-- `README.md`: active branch inventory and merge order
-- `REPOSITORY.md`: repository-specific workflow, permissions, and check profiles
-- `MULTI_AGENT.md`: concurrent-agent isolation with Git worktrees
-- `MODEL_ROUTING.md`: model selection and switch gate used only for formal plans
-- `GIT_WORKFLOW.md`: branching, staging, autonomous commits, confirmed temporary-artifact cleanup, and destructive-action gates
-- `templates/`: starter branch/archive files
+Escalate from routine to durable as soon as a lasting decision, blocker, risky partial state, or session boundary makes resumption context valuable. Creating records late is valid; record the current durable state rather than reconstructing routine narration. Concurrency always uses the concurrent tier.
 
-Paths mirror branch names, for example `feature/example.md` and `feature/example.history.md`.
+Do not create handoff records merely because a task has a branch, an IDE opened, an agent made a plan, or a small change received a follow-up prompt.
 
-## Startup or resumption
+## Durable branch startup
 
-1. Begin with `git status --short --branch`.
-2. Read the current handoff only when resuming ongoing work, inheriting an unfamiliar branch, or when scope is unclear.
-3. Inspect tips, upstreams, merge bases, diffs, stashes, or history only when the intended action depends on them.
-4. Verify only handoff claims that affect the next action. Correct stale durable context; do not continually mirror transient Git status into Markdown.
-5. Ask the owner only for intent that repository evidence cannot establish.
+1. Start with concise Git status and confirm the intended base.
+2. Create the mirrored handoff/history from `templates/` and add one index row.
+3. Record objective, bounded scope, acceptance criteria, durable decisions, risks, and one next action.
+4. For concurrent work, follow `MULTI_AGENT.md` before edits and record the sibling worktree plus owned/no-go paths.
+5. Run `python scripts/validate_handoffs.py --quiet --require-current-handoff` after the structural change.
 
-When agents are actually concurrent, read `MULTI_AGENT.md` and confirm this folder is the agent's dedicated worktree.
+When resuming or inheriting durable work, read the active handoff and only the newest relevant history. Verify only claims that affect the next action. Inspect tips, upstreams, merge bases, stashes, or longer history only when the action depends on them.
 
-## Planning and context budget
+## Active record contents
 
-Do not create a formal implementation plan for straightforward, localized, or clearly specified work. IDE context does not itself justify a plan. Use a plan only when the user requests it or when ambiguity, risk, multiple dependent phases, cross-system coordination, or multi-session continuity makes it useful. Reuse rather than repeatedly restating a plan.
+Keep only information that would change a resuming agent's next action:
 
-When a formal plan is warranted, apply `MODEL_ROUTING.md`: identify only runtime-reported model information, tag each phase with the least-cost capable route, and pause before a phase only when a known available alternative is materially better. Model routing must not turn routine work into a plan or add repeated comparison prose.
+- objective, scope, non-goals, and acceptance criteria;
+- owner decisions and constraints;
+- unresolved risks or blockers;
+- one immediate safe next action;
+- the latest meaningful validation checkpoint or relevant deferral;
+- worktree and path ownership when concurrent.
 
-Start investigations narrowly. Prefer search over reading: locate with grep/glob and read the lines that matter. Batch independent reads and commands into one step, do not re-read a file you just wrote, and cite `path:line` instead of pasting file contents back to the user.
+Do not mirror current SHA, clean/dirty state, upstream tracking, ahead/behind counts, routine reads, or complete stash inventories. Include an identifier only when it is essential to recovery.
 
-Probe before emitting *generated or unfamiliar* artifacts into model context — logs, build output, data dumps, vendored or minified trees: `python scripts/context_probe.py scan <paths>`. Source and documentation you already have a reason to open do not need a preflight; the probe costs a round trip and should not be spent on files a targeted read would handle. Estimates are calibrated routing signals, not exact tokenizer counts. Per-file bands:
+Update the active handoff once near the end of meaningful work, and only when its durable state changed. Update the index only for branch inventory, role, or merge order.
 
-- **low:** a full read is normally reasonable;
-- **medium:** search or retrieve a targeted chunk first;
-- **high:** require a concrete task reason before a full read;
-- **extreme:** ask before a full read unless exhaustive review was explicitly requested or is essential to an authorized high-risk operation.
+## Append-only history
 
-The `TOTAL` line bands the whole scan on its own larger scale, because a batch competes for the context window rather than a single file's budget. Apply both: a set can be safe while one file in it is not, and a set of individually safe files can still be too much to read at once.
-
-For append-only histories, logs, and reports, search for known identifiers first. Otherwise retrieve the recent end with `context_probe.py tail`, preserving normal order within the chunk, and page backward with `chunk` only when the current evidence requires it. Do not use tail-first reading for source code, configuration, manifests, or other files whose opening structure controls interpretation.
-
-Before optional repository-wide inspection, exhaustive history/log analysis, broad research, or a full build/test matrix that would materially increase token or time cost, explain why it is useful and ask the owner to approve it when a bounded alternative can still make progress. Explicit requests for exhaustive work and verification inherently required for a high-risk change do not need redundant confirmation unless they expand scope.
-
-## Active handoff contents
-
-Keep only durable, non-derivable context:
-
-- **Objective:** purpose, bounded scope, and acceptance criteria
-- **Constraints and decisions:** owner decisions and important non-goals
-- **Risks or blockers:** unresolved issues that affect continuation
-- **Next action:** one immediate safe action
-- **Validation checkpoint:** the latest meaningful checks or an explicit reason they are not yet required
-
-Avoid routinely storing exact tips, clean/dirty state, upstream tracking, ahead/behind counts, or complete stash inventories. Git is authoritative for those facts. Include a commit or stash identifier only when it is essential to recovery or a durable milestone.
-
-## Per-branch history
-
-Create an adjacent history for each new branch. Append only meaningful milestones:
+Append a milestone only when omitting it would change future action, for example:
 
 - branch creation and intended base;
-- a significant implementation or decision checkpoint;
-- approved scope or merge-order changes;
-- material validation results, PR events, rebases, closure, or recovery actions;
-- stash disposition affecting recoverability.
+- a material implementation or owner-decision checkpoint;
+- approved scope or merge-order change;
+- consequential validation, PR, rebase, recovery, or closure event;
+- stash disposition needed for recovery.
 
-Do not log routine reads, status checks, every prompt, every commit, or facts already available from Git. Never rewrite older entries; append a correction. When consulting history, begin with the newest relevant segment or tail chunk and move backward only as needed.
+Do not log every prompt, read, commit, status check, or passing test. Correct an old entry with a new entry; never rewrite it.
 
-Keep each history segment below 12,000 characters. To roll over, freeze the current file and continue in a numbered segment beside it — `feature/foo.history.md` is followed by `feature/foo.history.2.md`, then `.3.md`. The global ledger rolls over into `HISTORY/<year>.md`. The validator recognises both forms and gives them the full history budget; any other naming falls back to the 6,000-character handoff limit.
+Before 12,000 characters, freeze the segment and continue with `<branch>.history.2.md`, then `.3.md`. Roll global closure history into `HISTORY/<year>.md`. Search by identifier first; otherwise read the recent end and move backward only as evidence requires.
 
-## End of meaningful work
+## End of durable work
 
-Before the final response:
+1. Inspect scoped diff and status once.
+2. Apply the proportional verification and retry limits in `AGENTS.md`; use the standing profile in `REPOSITORY.md`.
+3. Update the active handoff once if durable state changed and append history only for a milestone.
+4. Run `python scripts/validate_handoffs.py --quiet --require-current-handoff` after structural record changes.
+5. Commit coherent, in-scope checkpoints under `GIT_WORKFLOW.md`.
 
-1. Inspect the resulting diff and Git status once.
-2. Run the smallest relevant verification. Broaden it only when failures or risk triggers warrant it.
-3. Update the active handoff once if objective, decisions, blockers, risks, validation checkpoint, or next action materially changed.
-4. Update `README.md` only if branch inventory, role, or merge order changed.
-5. Append history only for a meaningful milestone.
-6. Run `python scripts/validate_handoffs.py` once after structural handoff changes or when required by the PR profile. CI may provide the check for ordinary content-only updates.
-7. When the result is a coherent validated checkpoint, stage only owned paths, review the staged diff, and commit autonomously under `GIT_WORKFLOW.md`.
+Routine work skips this section's record maintenance. If routine work becomes durable, escalate tiers before leaving material unfinished state.
 
-Do not perform handoff maintenance for read-only work, routine inspection, a no-op session, or an ordinary edit that leaves durable continuation context unchanged. If interrupted during material unfinished work, record the blocker, relevant uncommitted state, and the first safe next action.
+## Merge readiness and closure
 
-## Verification and PR readiness
+Merge-ready means the requested scope is complete, unrelated work is absent, applicable checks pass or deferrals are recorded, no known high-severity regression remains, the base is correct, and durable records describe residual risk.
 
-Use the standing check profile in `REPOSITORY.md`; do not ask the owner to approve the same baseline before every PR. Ask only when choosing between materially different check scopes, when a check is unusually expensive or unavailable, when manual validation requires owner participation, or when deferring a normally required check.
+After an authorized merge or PR landing, work from the primary checkout:
 
-Verification should be proportional:
+1. Verify the feature tip or merge commit is reachable from the remote default branch.
+2. Append the closure milestone and move the handoff/history to mirrored `archive/` paths without rewriting them.
+3. Freeze the archived handoff to landed behavior, validation, disposition, and remaining cleanup.
+4. Append one global close entry and remove the active-index row.
+5. Commit the archival documentation; push only with current authorization or a matching standing grant.
+6. Remove worktrees or local/remote branches only with current authorization or a matching grant, after verifying no dirty, unique, or unmerged work remains.
 
-- documentation or isolated low-risk work: diff review and a directly relevant lightweight check;
-- normal behavior changes: targeted tests plus affected lint/type checks when useful;
-- shared interfaces, dependencies, build configuration, schemas/migrations, security/authentication, concurrency, persistence, PRs, and releases: broader integration or full-suite checks as appropriate.
+Never force-remove a dirty worktree or force-delete an unverified branch. A pushed but unmerged branch remains preserved.
 
-For noisy commands, prefer `python scripts/compact_check.py --name <label> -- <command>`. It writes complete failure output to a temporary local log while returning only a bounded tail to the agent; `--quiet` suppresses successful output, and `--shell` runs through the platform shell for pipelines, shell builtins, and wrapper scripts such as `./gradlew` or `gradlew.bat`. Report the exact command and its result. Automatically attempt no more than two diagnose/fix/retest cycles for the same failure. If the failure persists or the next check materially expands validation scope, ask before continuing unless the owner already requested broader validation.
+## Recovery and stashes
 
-Merge-ready means scope is complete, unrelated WIP is absent, the configured checks pass or explicit deferrals are recorded, no known high-severity regression remains, the base is correct, and the handoff reflects residual risks. Never imply that unrun validation passed.
+Prefer a dedicated worktree over stashing. If a stash is unavoidable, name it `wip <exact-branch-name>: <reason>` and mention it in the owning durable handoff only when recovery depends on it.
 
-## After merge and pull
+Before applying, verify the named branch and compare disposition. `pop` deletes on success, so use it only with appropriate authorization; otherwise use `apply`. Drop a stash only after its meaningful content is reachable or explicitly abandoned. Never act on another branch's stash.
 
-1. Update the configured default branch from its remote.
-2. Verify the feature tip or merge commit is reachable from the remote default branch.
-3. Append the closure milestone to branch history.
-4. Move the handoff/history to mirrored `archive/` paths and freeze the handoff to final purpose, landed behavior, validation, disposition, and remaining cleanup.
-5. Append one close entry to global `HISTORY.md`.
-6. Remove the branch from active `README.md`; update the default-branch handoff only if durable context changed.
-7. Commit archival documentation autonomously. Push only when authorized.
-8. After reachability verification, obtain explicit authorization before deleting remote/local branches or removing the sibling worktree. A pushed but unmerged branch stays preserved unless the owner explicitly parks or abandons it.
+For conflict resolution, worktree ownership, and deletion gates, use `GIT_WORKFLOW.md` and `MULTI_AGENT.md` rather than inventing a recovery path.
 
-For an authorized branch deletion, use `git branch -d`; use `-D` only when separately authorized after verified reachability and a known-safe refusal.
+## Validation
 
-Worktrees are sibling checkouts of normal branches, not separate histories. A feature commit is already in Git's object history, but it reaches the default branch only through an authorized merge/PR. `git push` alone does not merge it. Never force-remove a dirty/unmerged worktree or another agent's checkout.
+`python scripts/validate_handoffs.py` checks required files, budgets, links, indexed pairs, archives, and append-only history when a base ref is available. Add:
 
-## Stashes and recoverability
+- `--installed` in an installed repository to reject unfilled live-record placeholders;
+- `--require-current-handoff` for durable and concurrent branches;
+- `--quiet` for silent success;
+- `--verbose` only for worktree/tracking/stash diagnostics.
 
-Delete a stash only with explicit authorization, after comparing it with reachable work and establishing that all meaningful content is implemented or explicitly abandoned. Never delete a unique stash or wanted commit. Prefer a dedicated worktree over stashing to make room for another agent.
-
-## New branches
-
-1. Update from the remote default branch when authorized and relevant.
-2. Autonomously create one narrow `feature/`, `fix/`, or `chore/` branch; use a dedicated sibling worktree for actual concurrent work and record its path/owned paths in the handoff.
-3. Create the mirrored handoff/history from templates and record the objective and base milestone.
-4. Keep commits purpose-focused and exclude secrets, generated output, IDE-local state, and unrelated formatting.
-5. Use the standing validation profile, merge promptly when ready, and complete archival after merge.
-
-## Automated validation
-
-`python scripts/validate_handoffs.py` checks required files, differentiated size limits, links, active/archive pairs, and append-only history when a base ref is available. Use `--quiet` for silent success and `--verbose` only when worktree, branch-tracking, or stash diagnostics are relevant. Add `--installed` in a repository that has installed the kit to also reject unfilled template placeholders in live branch records; the kit's own repository ships those placeholders deliberately and does not use the flag.
-
-`scripts/context_probe.py` performs local size/token-risk preflight and bounded recent/backward retrieval. `scripts/compact_check.py` keeps complete command logs out of AI context while preserving failure artifacts for targeted follow-up.
-
-`scripts/test_agent_tools.py` covers all three tools with the standard library only: `python -m unittest discover -s scripts -p "test_*.py"`. CI runs the tests and the structural validator on Linux and Windows through `.github/workflows/handoff-validation.yml`. If `python` is not on PATH, use `python3` or `py`.
-
-## Compact implementation-agent prompt
-
-> Follow `AGENTS.md`. Start with requested files and concise Git status. Do not plan straightforward work. Search before reading and batch independent calls; size-probe generated or unfamiliar artifacts, and read recent append-only chunks before expanding backward. Make the narrowest reliable change, run compact risk-proportional checks, report the exact commands run, and ask before optional extreme-context, broad-validation, or repeated-failure expansion. Update durable handoff context once only when it materially changes.
+Routine branches intentionally pass without their own records. CI should use the repository's configured baseline; durable/concurrent branch preparation should use the stricter flag.

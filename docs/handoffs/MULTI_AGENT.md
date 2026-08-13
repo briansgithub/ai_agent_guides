@@ -21,11 +21,14 @@ One folder + one checkout forces branch switching, stashing, file overwrites, lo
 
 ## Standard workflow
 
-1. Update the default branch in the primary clone:
+1. Fetch and inspect the intended base in the primary clone:
    ```bash
    git checkout main
-   git pull origin main
+   git fetch origin
+   git status --short --branch
+   git log --oneline main..origin/main
    ```
+   Update `main` only when authorized by the current request or an exact standing grant in `REPOSITORY.md`; prefer an explicit fast-forward when appropriate instead of an implicit pull merge/rebase.
 2. Create one worktree per agent/task (new branch):
    ```bash
    git worktree add -b feature/<purpose> <path-to-new-folder> main
@@ -35,7 +38,7 @@ One folder + one checkout forces branch switching, stashing, file overwrites, lo
    git worktree add -b feature/foo ../repo-wt-foo main
    ```
 3. Open **that folder** as the agent’s workspace (not the primary clone unless this agent owns it).
-4. In that worktree: create the mirrored handoff + `.history.md`, implement, validate, commit on that branch only.
+4. In that worktree: create the mirrored handoff + `.history.md`, implement, validate with `--require-current-handoff`, and commit on that branch only.
 5. When finished: push/PR from that branch, then after merge follow the normal archive + branch-delete protocol.
 6. After explicit authorization, remove the worktree when done:
    ```bash
@@ -70,7 +73,7 @@ git worktree list
 - Handoffs remain in `docs/handoffs/` and are committed **on the branch that owns the work**.
 - Each agent updates only its own branch handoff/history in its worktree.
 - The active index (`README.md`) on a branch should list that branch (and `main` when present); do not expect every sibling worktree’s branch files to exist in every checkout until those branches merge.
-- `python scripts/validate_handoffs.py` must pass **in the worktree where the agent is working**. It requires:
+- `python scripts/validate_handoffs.py --require-current-handoff` must pass **in the worktree where the agent is working**. It requires:
   - every branch listed in that checkout’s active index;
   - the currently checked-out branch;
   - size limits, links, and archive pairs.

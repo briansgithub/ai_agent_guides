@@ -22,6 +22,23 @@ upgrading.
   debug, research, or testing artifacts are deleted. The policy keeps regression
   and backward-compatibility coverage and records each deleted group’s purpose and
   disposition for posterity before committing the cleanup.
+- Coordination now has three explicit tiers: routine branches use Git only,
+  durable work adds branch records, and concurrent work adds isolated sibling
+  worktrees. `--require-current-handoff` preserves strict validation where the
+  records are warranted without taxing every one-line change.
+- `REPOSITORY.md` now supports owner-recorded standing grants for exact actions,
+  targets, and conditions such as safe task-branch pushes or bounded generated
+  artifact cleanup. Missing or ambiguous grants remain deny-by-default.
+- Added `PLATFORM_COMPATIBILITY.md`, a live-client smoke matrix that distinguishes
+  registered instruction filenames from actually verified discovery behavior.
+
+### Changed
+
+- `MASTER_HANDOFF.md` is now a compact lifecycle router instead of repeating the
+  context, validation, Git, model, and concurrency policies it links to.
+- The multi-agent startup flow now fetches and inspects the base, then requires
+  authorization before an explicit update; it no longer recommends implicit
+  `git pull` integration.
 
 ### Clarified
 

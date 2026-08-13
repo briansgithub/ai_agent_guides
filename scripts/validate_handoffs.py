@@ -52,6 +52,7 @@ POLICY_FILES = {
     "MULTI_AGENT.md",
     "MODEL_ROUTING.md",
     "GIT_WORKFLOW.md",
+    "PLATFORM_COMPATIBILITY.md",
     "README.md",
 }
 # Link text is presentational; only the branch name and the two targets are
@@ -197,11 +198,13 @@ def validate_active_pairs(
     entries: dict[str, tuple[Path, Path]],
     errors: list[str],
     verbose: bool,
+    require_current_handoff: bool = False,
 ) -> None:
-    """Require handoffs for indexed branches and the current checkout only.
+    """Require indexed pairs, plus the current branch when explicitly requested.
 
-    Other local branches may live in sibling worktrees; their handoff files are
-    not required to exist in this working tree until those branches merge.
+    Routine branches intentionally have no records. Durable/concurrent work uses
+    ``--require-current-handoff``. Other local branches may live in sibling
+    worktrees and are not required in this checkout until their records merge.
     """
     inside = run_git(root, "rev-parse", "--is-inside-work-tree")
     toplevel = run_git(root, "rev-parse", "--show-toplevel")
@@ -221,7 +224,7 @@ def validate_active_pairs(
         local_branches = set(branches.stdout.splitlines()) if branches.returncode == 0 else set()
 
     required = set(entries)
-    if current_branch:
+    if current_branch and require_current_handoff:
         required.add(current_branch)
 
     for branch in sorted(required):
@@ -468,6 +471,11 @@ def main() -> int:
         help="also reject unfilled template placeholders (use in repositories that "
         "have installed the kit, not in the kit's own repository)",
     )
+    parser.add_argument(
+        "--require-current-handoff",
+        action="store_true",
+        help="require the checked-out durable/concurrent branch in the active index",
+    )
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]
@@ -487,6 +495,7 @@ def main() -> int:
         handoffs / "MULTI_AGENT.md",
         handoffs / "MODEL_ROUTING.md",
         handoffs / "GIT_WORKFLOW.md",
+        handoffs / "PLATFORM_COMPATIBILITY.md",
         handoffs / "README.md",
         handoffs / "HISTORY.md",
         handoffs / "templates" / "BRANCH_HANDOFF.md",
@@ -502,7 +511,14 @@ def main() -> int:
     validate_sizes(handoffs, markdown_files, errors)
     validate_links(markdown_files + [root / "AGENTS.md"], errors)
     entries = parse_index(handoffs, errors)
-    validate_active_pairs(root, handoffs, entries, errors, args.verbose)
+    validate_active_pairs(
+        root,
+        handoffs,
+        entries,
+        errors,
+        args.verbose,
+        args.require_current_handoff,
+    )
     validate_archive_pairs(root, handoffs, errors)
     if args.installed:
         validate_no_placeholders(root, handoffs, markdown_files, errors)

@@ -45,11 +45,12 @@ Routed to from `AGENTS.md` only when relevant; never startup reading.
 
 | Path | Purpose | Ships |
 |---|---|---|
-| `docs/handoffs/MASTER_HANDOFF.md` | Lifecycle reference: startup, context budget, handoff contents, per-branch history, close and archive sequence, verification and PR readiness, stash recovery. | yes |
-| `docs/handoffs/REPOSITORY.md` | Repository-specific configuration: default branch, merge strategy, agent permissions, standing check profile, toolchain notes. The file installers customize first. | yes |
+| `docs/handoffs/MASTER_HANDOFF.md` | Compact lifecycle reference for choosing routine/durable/concurrent tiers and managing durable records through archive/recovery. | yes |
+| `docs/handoffs/REPOSITORY.md` | Repository-specific configuration: workflow tier defaults, exact standing permission grants, check profile, and toolchain notes. Installers customize this first. | yes |
 | `docs/handoffs/MULTI_AGENT.md` | Git worktree isolation for genuinely concurrent agents. Toolchain-neutral. | yes |
 | `docs/handoffs/MODEL_ROUTING.md` | Formal-plan model routing: runtime identity, capability classes, total-token optimization, and the developer switch gate. | yes |
 | `docs/handoffs/GIT_WORKFLOW.md` | Default Git practices: narrow branches, exact staging, autonomous checkpoint commits, confirmed temporary-artifact cleanup, regression-test retention, and destructive-action gates. | yes |
+| `docs/handoffs/PLATFORM_COMPATIBILITY.md` | On-demand live-client smoke matrix separating registered rule-file conventions from verified discovery behavior. | yes |
 
 ## Branch records
 
@@ -81,7 +82,7 @@ If `python` is not on PATH, use `python3` (most Linux/macOS) or `py` (Windows).
 
 | Path | Purpose | Ships |
 |---|---|---|
-| `scripts/validate_handoffs.py` | Structural validator: required files, size budgets, links, active and archive pairs, append-only histories. `--installed` also rejects unfilled template placeholders. | yes |
+| `scripts/validate_handoffs.py` | Structural validator: required files, size budgets, links, active/archive pairs, and append-only histories. `--installed` rejects live placeholders; `--require-current-handoff` enforces durable/concurrent branch records. | yes |
 | `scripts/context_probe.py` | Size and token-risk preflight for generated or unfamiliar artifacts, plus bounded recency-first retrieval (`tail`, `chunk`). Estimates calibrated against measured tokenizer output. | yes |
 | `scripts/compact_check.py` | Runs one check while keeping full logs off the AI context path: bounded failure tail to the agent, complete log on disk. `--shell` for pipelines and wrapper scripts. | yes |
 | `scripts/test_agent_tools.py` | Standard-library tests for all three tools, with a regression case per fixed defect. | yes |

@@ -35,10 +35,10 @@ These defaults apply everywhere. Rules marked *if present* use optional kit file
 
 - Record something only if an agent resuming this work would act differently without it. That is the test for "durable" and "meaningful" throughout these rules.
 - Keep durable context where the repository already keeps it. Get transient facts — tips, dirty state, ahead/behind — from Git instead of copying them into prose.
-- *If `docs/handoffs/` is present:* it is that location. Read the active handoff only when resuming or inheriting work, or when scope is unclear, and read only the newest history you need. Route on demand — `MASTER_HANDOFF.md` for lifecycle and recovery, `REPOSITORY.md` for policy and check profiles, `MULTI_AGENT.md` only when agents are actually concurrent.
-- *If present:* update the handoff once, at the end, and only when objective, scope, decisions, blockers, risks, validation, or next action changed. Skip it for read-only, routine, and no-op work. Update the index only for branch inventory, role, or merge order; append history only for milestones.
-- Concurrent agents need separate worktrees: sibling folders beside the primary checkout, never nested. Each is a normal branch; `push` publishes it, only an authorized merge or PR lands it.
-- Close work from the primary checkout: verify reachability and archive the handoff, then obtain explicit authorization before removing worktrees or deleting local/remote branches. Stop on dirty or unmerged work; never force-delete or overwrite another agent's work.
-- *If present:* run `python scripts/validate_handoffs.py --quiet` after structural handoff changes. Never delete branch documentation.
+- *If `docs/handoffs/` is present,* choose the lightest coordination tier: **routine** localized/single-session work uses Git only; **durable** multi-session, material, risky, or decision-heavy work adds a branch handoff/history; **concurrent** work adds those records plus a separate sibling worktree per agent.
+- Route on demand: `MASTER_HANDOFF.md` for durable lifecycle/recovery, `REPOSITORY.md` for standing permissions and check profiles, and `MULTI_AGENT.md` only for actual concurrency. Read only the active record and newest history needed.
+- For durable/concurrent work, update the handoff once at the end only when objective, decisions, blockers, risks, validation, or next action changed; append history only for milestones. Routine/read-only/no-op work creates none.
+- Close durable work from the primary checkout: verify reachability and archive its records, then require authorization not already granted in `REPOSITORY.md` before removing worktrees or deleting branches. Stop on dirty or unmerged work; never force-delete or overwrite another agent's work.
+- *If present:* after structural changes run `python scripts/validate_handoffs.py --quiet`; add `--require-current-handoff` for durable or concurrent branches. Never delete branch documentation.
 
 If `python` is missing, use `python3` or `py`.
