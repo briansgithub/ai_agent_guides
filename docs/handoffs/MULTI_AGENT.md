@@ -83,7 +83,7 @@ git worktree list
 
 - **Cursor:** File → Open Folder on the worktree path; one chat/agent per worktree folder.
 - **Google Antigravity / Gemini:** point the agent at the worktree folder (Antigravity often creates worktrees under its own path—treat that folder as the workspace and keep handoffs updated there).
-- Keep `AGENTS.md` and the per-tool shims (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.github/copilot-instructions.md`) in the repo so every worktree inherits the same protocol after checkout.
+- Keep `AGENTS.md` and the per-tool shims (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.grok/rules/`, `.grok/GROK.md`, `.github/copilot-instructions.md`) in the repo so every worktree inherits the same protocol after checkout.
 - Opening an IDE or receiving a routine follow-up does not itself require a formal implementation plan. Use the planning thresholds in `AGENTS.md` and reuse any existing plan instead of proposing one on every prompt.
 
 ## IDE-specific worktree notes

@@ -45,6 +45,10 @@ ENTRYPOINT_LIMITS = {
     ".trae/rules/project_rules.md": SHIM_LIMIT,
     ".idx/airules.md": SHIM_LIMIT,
     ".kilocode/rules/agents.md": SHIM_LIMIT,
+    # xAI Grok CLI/Build: docs.x.ai project-rules discovery.
+    ".grok/rules/agents.md": SHIM_LIMIT,
+    # Community grok-cli; official Grok does not use this path.
+    ".grok/GROK.md": SHIM_LIMIT,
 }
 POLICY_FILES = {
     "MASTER_HANDOFF.md",

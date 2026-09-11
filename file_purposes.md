@@ -22,10 +22,12 @@ win. Each is capped at 600 characters, and a test asserts it points at `AGENTS.m
 
 | Path | Tool | Ships |
 |---|---|---|
-| `AGENTS.md` | **Authoritative** agent defaults. Codex, OpenCode, Zed, Cursor, VS Code chat. The only required entry point. | yes |
+| `AGENTS.md` | **Authoritative** agent defaults. Codex, OpenCode, Zed, Cursor, VS Code chat, Grok CLI (xAI). The only required entry point. | yes |
 | `CLAUDE.md` | Claude Code, VS Code chat | yes |
 | `GEMINI.md` | Gemini CLI, Antigravity, Gemini Code Assist, Android Studio | yes |
-| `.cursor/rules/handoff-maintenance.mdc` | Cursor | yes |
+| `.cursor/rules/handoff-maintenance.mdc` | Cursor, including Grok in Cursor | yes |
+| `.grok/rules/agents.md` | Grok CLI (xAI) | yes |
+| `.grok/GROK.md` | community grok-cli | yes |
 | `.github/copilot-instructions.md` | GitHub Copilot | yes |
 | `.clinerules` | Cline | yes |
 | `.windsurfrules` | Windsurf | yes |

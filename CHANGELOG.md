@@ -9,6 +9,9 @@ upgrading.
 
 ### Added
 
+- Pointer shims for Grok: `.grok/rules/agents.md` for xAI Grok CLI/Build, and
+  `.grok/GROK.md` for community grok-cli. Cursor Grok already used the existing
+  `.cursor/rules/` pointer; official Grok also discovers `AGENTS.md`.
 - Formal plans now identify the runtime-reported provider/model, route each phase
   to the least-cost capable model, and pause before a phase when a known available
   alternative is materially better. The on-demand `MODEL_ROUTING.md` policy

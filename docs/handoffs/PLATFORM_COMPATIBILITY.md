@@ -13,10 +13,12 @@ This matrix tracks whether an IDE or agent host actually discovers its pointer f
 
 | Client/host | Entry point | Smoke status | Client/version and date | Evidence/notes |
 |---|---|---|---|---|
-| Codex, OpenCode, Zed, Cursor, VS Code chat | `AGENTS.md` | not-run | — | Authoritative file; test each host separately before claiming support |
+| Codex, OpenCode, Zed, Cursor, VS Code chat, Grok CLI (xAI) | `AGENTS.md` | not-run | — | Authoritative file; test each host separately before claiming support |
 | Claude Code, VS Code chat | `CLAUDE.md` | not-run | — | Pointer |
 | Gemini CLI, Antigravity, Gemini Code Assist, Android Studio | `GEMINI.md` | not-run | — | Pointer; test each host separately |
-| Cursor | `.cursor/rules/handoff-maintenance.mdc` | not-run | — | Always-apply pointer |
+| Cursor, including Grok in Cursor | `.cursor/rules/handoff-maintenance.mdc` | not-run | — | Always-apply pointer |
+| Grok CLI (xAI) | `.grok/rules/agents.md` | not-run | — | Pointer; official Grok also loads `AGENTS.md`, `CLAUDE.md`, and `.cursor/rules/` |
+| community grok-cli | `.grok/GROK.md` | not-run | — | Convention not live-tested here |
 | GitHub Copilot | `.github/copilot-instructions.md` | not-run | — | Pointer |
 | Cline | `.clinerules` | not-run | — | Pointer |
 | Windsurf | `.windsurfrules` | not-run | — | Pointer |

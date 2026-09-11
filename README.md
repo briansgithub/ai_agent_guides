@@ -18,10 +18,12 @@ To use it elsewhere, see [Install in another repository](#install-in-another-rep
 
 | Path | Tool |
 |---|---|
-| `AGENTS.md` | **authoritative** — Codex, OpenCode, Zed, Cursor, VS Code chat |
+| `AGENTS.md` | **authoritative** — Codex, OpenCode, Zed, Cursor, VS Code chat, Grok CLI (xAI) |
 | `CLAUDE.md` | Claude Code, VS Code chat |
 | `GEMINI.md` | Gemini CLI, Antigravity, Gemini Code Assist, Android Studio |
-| `.cursor/rules/handoff-maintenance.mdc` | Cursor |
+| `.cursor/rules/handoff-maintenance.mdc` | Cursor, including Grok in Cursor |
+| `.grok/rules/agents.md` | Grok CLI (xAI) |
+| `.grok/GROK.md` | community grok-cli |
 | `.github/copilot-instructions.md` | GitHub Copilot |
 | `.clinerules` | Cline |
 | `.windsurfrules` | Windsurf |
