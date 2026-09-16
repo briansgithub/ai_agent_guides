@@ -14,7 +14,7 @@ To use it elsewhere, see [Install in another repository](#install-in-another-rep
 
 ## Agent entry points
 
-`AGENTS.md` is the single source of the defaults. Everything else is a pointer to it, because tool-specific files take precedence over `AGENTS.md` in clients that read both — a pointer redirects to the one source instead of letting a stale copy win. The validator caps `AGENTS.md` at 5,000 characters and every shim at 600, and a test asserts each shim actually points at `AGENTS.md`.
+`AGENTS.md` is the single source of the defaults. Everything else is a pointer to it, because tool-specific files take precedence over `AGENTS.md` in clients that read both — a pointer redirects to the one source instead of letting a stale copy win. The validator caps `AGENTS.md` at 8,000 characters and every shim at 600, and a test asserts each shim actually points at `AGENTS.md`.
 
 | Path | Tool |
 |---|---|

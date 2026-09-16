@@ -23,7 +23,7 @@ HISTORY_MAX_CHARACTERS = 12_000
 # win. All are optional — a repository deletes the shims it does not use.
 SHIM_LIMIT = 600
 ENTRYPOINT_LIMITS = {
-    "AGENTS.md": 5_000,
+    "AGENTS.md": 8_000,
     # Original five.
     "CLAUDE.md": SHIM_LIMIT,
     "GEMINI.md": SHIM_LIMIT,
